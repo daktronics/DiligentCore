@@ -300,11 +300,6 @@ PRIVATE
     ${PRIVATE_DEPENDENCIES}
 PUBLIC
     ${PUBLIC_DEPENDENCIES}
-
-    # TODO:
-    spirv-cross-core
-    SPIRV-Tools
-    SPIRV-Tools-opt
 )
 target_link_libraries(Diligent-GraphicsEngineVk-shared
 PRIVATE

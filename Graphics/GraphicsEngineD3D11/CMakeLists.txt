@@ -118,12 +118,12 @@ PRIVATE
     Diligent-BuildSettings
     Diligent-GraphicsEngineD3DBase
     Diligent-TargetPlatform
-    Diligent-Common 
+    Diligent-Common
+    Diligent-ShaderTools 
     dxgi.lib
     d3d11.lib
     d3dcompiler.lib
 PUBLIC
-    Diligent-ShaderTools
     Diligent-GraphicsEngineD3D11Interface
 )
 

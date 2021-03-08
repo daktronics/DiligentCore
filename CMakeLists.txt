@@ -332,19 +332,7 @@ endif()
 
 include(BuildUtils.cmake)
 
-if ((${DILIGENT_USE_VCPKG}))
-	find_package(SPIRV-Tools CONFIG REQUIRED)
-	find_package(SPIRV-Tools-opt CONFIG REQUIRED)
-	find_package(SPIRV-Tools-link CONFIG REQUIRED)
-	find_package(SPIRV-Tools-reduce CONFIG REQUIRED)
-	find_package(glslang CONFIG REQUIRED)
-	find_package(spirv_cross_core CONFIG REQUIRED)
-	find_package(GLEW REQUIRED)
-else()
-	add_subdirectory(ThirdParty)
-endif()
-
-
+add_subdirectory(ThirdParty)
 add_subdirectory(BuildTools)
 add_subdirectory(Primitives)
 add_subdirectory(Platforms)

@@ -116,36 +116,23 @@ endif()
 
 if(ENABLE_SPIRV)
     target_link_libraries(Diligent-ShaderTools 
-    #PUBLIC
-    #    spirv_cross_core
-    #PRIVATE
-    #    spirv-cross-core
-	PUBLIC
+    PRIVATE
         spirv-cross-core
     )
 
-	if (NOT ${DILIGENT_USE_VCPKG})
-		if (NOT ${DILIGENT_NO_GLSLANG})
-			target_link_libraries(Diligent-ShaderTools 
-			PRIVATE
-				glslang
-				SPIRV
-				SPIRV-Tools-opt
-			)
+    if (NOT ${DILIGENT_NO_GLSLANG})
+        target_link_libraries(Diligent-ShaderTools 
+        PRIVATE
+            glslang
+            SPIRV
+            SPIRV-Tools-opt
+        )
 
-			target_include_directories(Diligent-ShaderTools 
-			PRIVATE
-				../../ThirdParty/glslang
-			)
-		endif()
-	else()
-		target_link_libraries(Diligent-ShaderTools 
-		PRIVATE
-			glslang::HLSL glslang::SPIRV glslang::glslang glslang::OGLCompiler
-			SPIRV-Tools
-			SPIRV-Tools-opt
-		)
-	endif()
+        target_include_directories(Diligent-ShaderTools 
+        PRIVATE
+            ../../ThirdParty/glslang
+        )
+    endif()
 endif()
 
 set_common_target_properties(Diligent-ShaderTools)
