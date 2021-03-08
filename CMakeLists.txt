@@ -332,7 +332,12 @@ endif()
 
 include(BuildUtils.cmake)
 
+if (${DILIGENT_USE_VCPKG})
+    find_package(GLEW REQUIRED)
+endif()
+
 add_subdirectory(ThirdParty)
+
 add_subdirectory(BuildTools)
 add_subdirectory(Primitives)
 add_subdirectory(Platforms)
