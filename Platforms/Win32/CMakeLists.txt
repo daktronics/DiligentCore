@@ -25,7 +25,7 @@ PUBLIC
     interface
 )
 
-target_link_libraries(Diligent-Win32Platform 
+target_link_libraries(Diligent-Win32Platform STATIC
 PUBLIC
     Diligent-BasicPlatform
     Diligent-PlatformInterface
