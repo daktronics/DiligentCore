@@ -358,7 +358,5 @@ if(DILIGENT_INSTALL_CORE)
     install(FILES License.txt DESTINATION "Licenses" RENAME DiligentEngine-License.txt)
 endif(DILIGENT_INSTALL_CORE)
 
-if(NOT ${DILIGENT_USE_VCPKG})
-    # Create a custom target to run source code formatting validation command
-    add_format_validation_target(DiligentCore "${CMAKE_CURRENT_SOURCE_DIR}" DiligentCore/BuildTools)
-endif()
+# Create a custom target to run source code formatting validation command
+add_format_validation_target(DiligentCore "${CMAKE_CURRENT_SOURCE_DIR}" DiligentCore/BuildTools)
