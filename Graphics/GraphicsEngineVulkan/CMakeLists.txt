@@ -144,9 +144,14 @@ set(DLL_SOURCE
 )
 
 add_library(Diligent-GraphicsEngineVkInterface INTERFACE)
-target_link_libraries     (Diligent-GraphicsEngineVkInterface INTERFACE Diligent-GraphicsEngineInterface)
-target_include_directories(Diligent-GraphicsEngineVkInterface INTERFACE interface)
-
+target_include_directories(Diligent-GraphicsEngineVkInterface
+INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface>
+)
+target_link_libraries(Diligent-GraphicsEngineVkInterface 
+INTERFACE 
+    Diligent-GraphicsEngineInterface
+)
 
 add_library(Diligent-GraphicsEngineVk-static STATIC
     ${SRC} ${VULKAN_UTILS_SRC} ${INTERFACE} ${INCLUDE} ${VULKAN_UTILS_INCLUDE}
@@ -356,6 +361,7 @@ set_source_files_properties(
 )
 
 if(DILIGENT_INSTALL_CORE)
+    install_core_lib(Diligent-GraphicsEngineVkInterface)
     install_core_lib(Diligent-GraphicsEngineVk-shared)
     install_core_lib(Diligent-GraphicsEngineVk-static)
 endif()

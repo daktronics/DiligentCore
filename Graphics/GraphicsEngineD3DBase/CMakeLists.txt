@@ -39,8 +39,11 @@ add_library(Diligent-GraphicsEngineD3DBase STATIC
 )
 
 add_library(Diligent-GraphicsEngineD3DBaseInterface INTERFACE)
-target_link_libraries     (Diligent-GraphicsEngineD3DBaseInterface INTERFACE Diligent-GraphicsEngineInterface)
-target_include_directories(Diligent-GraphicsEngineD3DBaseInterface INTERFACE interface)
+target_link_libraries(Diligent-GraphicsEngineD3DBaseInterface INTERFACE Diligent-GraphicsEngineInterface)
+target_include_directories(Diligent-GraphicsEngineD3DBaseInterface
+INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface>
+)
 
 target_include_directories(Diligent-GraphicsEngineD3DBase
 PUBLIC
@@ -67,6 +70,7 @@ set_target_properties(Diligent-GraphicsEngineD3DBase PROPERTIES
 )
 
 if(DILIGENT_INSTALL_CORE)
+    install_core_lib(Diligent-GraphicsEngineD3DBaseInterface)
     install_core_lib(Diligent-GraphicsEngineD3DBase)
 endif()
 

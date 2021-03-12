@@ -154,8 +154,14 @@ else()
 endif()
 
 add_library(Diligent-GraphicsEngineOpenGLInterface INTERFACE)
-target_link_libraries     (Diligent-GraphicsEngineOpenGLInterface INTERFACE Diligent-GraphicsEngineInterface)
-target_include_directories(Diligent-GraphicsEngineOpenGLInterface INTERFACE interface)
+target_include_directories(Diligent-GraphicsEngineOpenGLInterface
+INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface>
+)
+target_link_libraries(Diligent-GraphicsEngineOpenGLInterface 
+INTERFACE 
+    Diligent-GraphicsEngineInterface
+)
 
 
 add_library(Diligent-GraphicsEngineOpenGL-static STATIC
@@ -306,6 +312,7 @@ set_source_files_properties(
 )
 
 if(DILIGENT_INSTALL_CORE)
+    install_core_lib(Diligent-GraphicsEngineOpenGLInterface)
     install_core_lib(Diligent-GraphicsEngineOpenGL-shared)
     install_core_lib(Diligent-GraphicsEngineOpenGL-static)
 endif()
