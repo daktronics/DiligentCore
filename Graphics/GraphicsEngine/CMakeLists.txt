@@ -87,7 +87,8 @@ set_common_target_properties(Diligent-GraphicsEngine)
 target_include_directories(Diligent-GraphicsEngine 
 PUBLIC
     include
-    interface
+INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface>
 )
 
 target_link_libraries(Diligent-GraphicsEngine 
@@ -97,6 +98,7 @@ PUBLIC
     Diligent-PlatformInterface
     Diligent-Common
     Diligent-GraphicsAccessories
+    Diligent-Primitives
 )
 
 source_group("src" FILES ${SOURCE})

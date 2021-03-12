@@ -148,7 +148,7 @@ add_custom_command(OUTPUT ${GENERATE_MIPS_SHADER_INC} # We must use full path he
 add_library(Diligent-GraphicsEngineVkInterface INTERFACE)
 target_include_directories(Diligent-GraphicsEngineVkInterface
 INTERFACE
-    interface
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface>
 )
 target_link_libraries(Diligent-GraphicsEngineVkInterface 
 INTERFACE 
@@ -413,6 +413,7 @@ set_source_files_properties(
 )
 
 if(DILIGENT_INSTALL_CORE)
+    install_core_lib(Diligent-GraphicsEngineVkInterface)
     install_core_lib(Diligent-GraphicsEngineVk-shared)
     install_core_lib(Diligent-GraphicsEngineVk-static)
 endif()

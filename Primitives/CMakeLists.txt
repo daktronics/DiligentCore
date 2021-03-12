@@ -28,17 +28,22 @@ set(INTERFACE
 
 # This should be an interface library. However, CMake does not show
 # interface libraries in an IDE, so we have to create a static library instead
+add_library(Diligent-PrimitivesInterface INTERFACE ${INTERFACE})
+set_common_target_properties(Diligent-PrimitivesInterface)
+
+target_include_directories(Diligent-PrimitivesInterface
+INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface>
+)
+
 add_library(Diligent-Primitives STATIC ${INTERFACE} ${SOURCE})
 set_common_target_properties(Diligent-Primitives)
 
-target_link_libraries(Diligent-Primitives 
+target_link_libraries(Diligent-Primitives
+PUBLIC
+    Diligent-PrimitivesInterface
 PRIVATE
     Diligent-BuildSettings
-)
-
-target_include_directories(Diligent-Primitives
-PUBLIC
-    interface
 )
 
 source_group("interface" FILES ${INTERFACE})
@@ -49,5 +54,6 @@ set_target_properties(Diligent-Primitives PROPERTIES
 )
 
 if(DILIGENT_INSTALL_CORE)
+    install_core_lib(Diligent-PrimitivesInterface)
     install_core_lib(Diligent-Primitives)
 endif()
