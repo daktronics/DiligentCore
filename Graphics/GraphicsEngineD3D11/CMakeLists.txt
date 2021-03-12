@@ -96,9 +96,19 @@ set(DLL_SRC
     src/GraphicsEngineD3D11.def
 )
 
+set(DLL_SRC
+    src/DLLMain.cpp
+    src/GraphicsEngineD3D11.def
+)
 add_library(Diligent-GraphicsEngineD3D11Interface INTERFACE)
-target_link_libraries     (Diligent-GraphicsEngineD3D11Interface INTERFACE Diligent-GraphicsEngineD3DBaseInterface)
-target_include_directories(Diligent-GraphicsEngineD3D11Interface INTERFACE interface)
+target_include_directories(Diligent-GraphicsEngineD3D11Interface
+INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface>
+)
+target_link_libraries(Diligent-GraphicsEngineD3D11Interface 
+INTERFACE 
+    Diligent-GraphicsEngineD3DBaseInterface
+)
 
 
 add_library(Diligent-GraphicsEngineD3D11-static STATIC 
@@ -166,6 +176,7 @@ set_source_files_properties(
 )
 
 if(DILIGENT_INSTALL_CORE)
+    install_core_lib(Diligent-GraphicsEngineD3D11Interface)
     install_core_lib(Diligent-GraphicsEngineD3D11-shared)
     install_core_lib(Diligent-GraphicsEngineD3D11-static)
 endif()

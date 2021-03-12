@@ -341,6 +341,11 @@ function(install_core_lib _TARGET)
                 LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}/${DILIGENT_CORE_DIR}/$<CONFIG>"
                 RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}/${DILIGENT_CORE_DIR}/$<CONFIG>"
         )
+        install(EXPORT ${_TARGET}Target
+                FILE ${_TARGET}-target.cmake
+                NAMESPACE Diligent::
+                DESTINATION lib/cmake/diligent-core
+        )
         if (DILIGENT_INSTALL_PDB)
             install(FILES $<TARGET_PDB_FILE:${_TARGET}> DESTINATION "${CMAKE_INSTALL_BINDIR}/${DILIGENT_CORE_DIR}/$<CONFIG>" OPTIONAL)
         endif()
