@@ -61,8 +61,8 @@ add_library(Diligent-Common STATIC ${SOURCE} ${INCLUDE} ${INTERFACE})
 target_include_directories(Diligent-Common
 PRIVATE
     include
-PUBLIC
-    interface
+PUBLIC 
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface>
 )
 
 target_link_libraries(Diligent-Common
@@ -87,4 +87,5 @@ set_target_properties(Diligent-Common PROPERTIES
 
 if(DILIGENT_INSTALL_CORE)
     install_core_lib(Diligent-Common)
+    install_core_lib_and_export(Diligent-Common)
 endif()

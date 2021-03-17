@@ -25,14 +25,14 @@ set_common_target_properties(Diligent-BasicPlatform)
 
 target_include_directories(Diligent-BasicPlatform 
 PUBLIC
-    interface
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface>
 )
 
 target_link_libraries(Diligent-BasicPlatform 
 PRIVATE
     Diligent-BuildSettings 
 PUBLIC
-    Diligent-Primitives
+    Diligent-PrimitivesInterface
 )
 
 source_group("src" FILES ${SOURCE})
@@ -45,6 +45,7 @@ set_target_properties(Diligent-BasicPlatform PROPERTIES
 
 if(DILIGENT_INSTALL_CORE)
     install_core_lib(Diligent-BasicPlatform)
+    install_core_lib_and_export(Diligent-BasicPlatform)
     get_target_relative_dir(Diligent-BasicPlatform BASIC_PLATFORM_DIR)
     install(DIRECTORY    "../interface"
             DESTINATION  "${CMAKE_INSTALL_INCLUDEDIR}/${BASIC_PLATFORM_DIR}/../"
