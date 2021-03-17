@@ -86,4 +86,5 @@ set_target_properties(Diligent-GraphicsTools PROPERTIES
 
 if(DILIGENT_INSTALL_CORE)
     install_core_lib(Diligent-GraphicsTools)
+    install_core_lib_and_export(Diligent-GraphicsTools)
 endif()

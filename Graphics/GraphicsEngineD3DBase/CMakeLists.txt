@@ -87,6 +87,7 @@ set_target_properties(Diligent-GraphicsEngineD3DBase PROPERTIES
 if(DILIGENT_INSTALL_CORE)
     install_core_lib(Diligent-GraphicsEngineD3DBaseInterface)
     install_core_lib(Diligent-GraphicsEngineD3DBase)
+    install_core_lib_and_export(Diligent-GraphicsEngineD3DBase)
 endif()
 
 # Set paths to D3Dcompiler_47.dll, dxcompiler.dll, and dxil.dll

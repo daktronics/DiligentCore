@@ -288,6 +288,26 @@ function(install_core_lib _TARGET)
     endif()
 endfunction()
 
+# Performs installation steps for the core library
+function(install_core_lib_and_export _TARGET)
+    get_target_relative_dir(${_TARGET} TARGET_RELATIVE_PATH)
+
+    install(TARGETS				 ${_TARGET}
+            EXPORT ${_TARGET}Target
+            ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}/${DILIGENT_CORE_DIR}/$<CONFIG>"
+            LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}/${DILIGENT_CORE_DIR}/$<CONFIG>"
+            RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}/${DILIGENT_CORE_DIR}/$<CONFIG>"
+    )
+    install(EXPORT ${_TARGET}Target
+            FILE ${_TARGET}-target.cmake
+            NAMESPACE Diligent::
+            DESTINATION lib/cmake/diligent
+    )
+    if (DILIGENT_INSTALL_PDB)
+        install(FILES $<TARGET_PDB_FILE:${_TARGET}> DESTINATION "${CMAKE_INSTALL_BINDIR}/${DILIGENT_CORE_DIR}/$<CONFIG>" OPTIONAL)
+    endif()
+endfunction()
+
 
 function(install_combined_static_lib COMBINED_LIB_NAME LIBS_LIST CUSTOM_TARGET_NAME CUSTOM_TARGET_FOLDER INSTALL_DESTINATION)
 

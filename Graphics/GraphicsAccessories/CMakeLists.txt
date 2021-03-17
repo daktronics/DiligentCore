@@ -47,4 +47,5 @@ set_target_properties(Diligent-GraphicsAccessories PROPERTIES
 
 if(DILIGENT_INSTALL_CORE)
     install_core_lib(Diligent-GraphicsAccessories)
+    install_core_lib_and_export(Diligent-GraphicsAccessories)
 endif()
