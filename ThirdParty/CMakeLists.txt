@@ -51,7 +51,7 @@ if (VULKAN_SUPPORTED OR METAL_SUPPORTED OR WEBGPU_SUPPORTED OR (ARCHIVER_SUPPORT
         set(SPIRV_SKIP_TESTS ON CACHE BOOL "Skip SPIRV tests")
         set(SPIRV_BUILD_COMPRESSION OFF CACHE BOOL "Do not build SPIRV compressing codec")
         set(SPIRV_SKIP_EXECUTABLES ON CACHE BOOL "Skip building SPIRV executable and tests along with the library")
-        set(SKIP_SPIRV_TOOLS_INSTALL ON CACHE BOOL "Skip SPIRV tools installation")
+        set(SKIP_SPIRV_TOOLS_INSTALL OFF CACHE BOOL "Skip SPIRV tools installation")
         set(SPIRV_WERROR OFF CACHE BOOL "Do not enable error on warning")
         if (${DILIGENT_IMPROVE_SPIRV_TOOLS_DEBUG_PERF})
             set(SPIRV_CHECK_CONTEXT OFF CACHE BOOL "Do not check if the IR context is in a valid state")
@@ -79,6 +79,8 @@ if (VULKAN_SUPPORTED OR METAL_SUPPORTED OR WEBGPU_SUPPORTED OR (ARCHIVER_SUPPORT
             # Optimization has to be disabled on Web, see build instructions on https://github.com/KhronosGroup/glslang
             set(ENABLE_OPT OFF)
         endif()
+        set(SKIP_GLSLANG_INSTALL OFF CACHE BOOL "Skip glslang installation")
+        set(ENABLE_CTEST OFF CACHE BOOL "Disable testing")
         add_subdirectory(glslang)
         set_directory_root_folder("glslang" "DiligentCore/ThirdParty/glslang")
 

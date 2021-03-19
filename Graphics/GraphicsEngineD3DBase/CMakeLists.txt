@@ -48,7 +48,7 @@ INTERFACE
 
 target_include_directories(Diligent-GraphicsEngineD3DBase
 PUBLIC
-    include
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 
 target_link_libraries(Diligent-GraphicsEngineD3DBase
