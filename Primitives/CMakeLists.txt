@@ -56,4 +56,5 @@ set_target_properties(Diligent-Primitives PROPERTIES
 if(DILIGENT_INSTALL_CORE)
     install_core_lib(Diligent-PrimitivesInterface)
     install_core_lib(Diligent-Primitives)
+    install_core_lib_and_export(Diligent-Primitives)
 endif()

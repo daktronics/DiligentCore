@@ -86,7 +86,7 @@ set_common_target_properties(Diligent-GraphicsEngine)
 
 target_include_directories(Diligent-GraphicsEngine 
 PUBLIC
-    include
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface>
 )
@@ -111,4 +111,5 @@ set_target_properties(Diligent-GraphicsEngine PROPERTIES
 
 if(DILIGENT_INSTALL_CORE)
     install_core_lib(Diligent-GraphicsEngine)
+    install_core_lib_and_export(Diligent-GraphicsEngine)
 endif()

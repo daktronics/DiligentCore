@@ -88,13 +88,16 @@ add_library(Diligent-ShaderTools STATIC ${SOURCE} ${INCLUDE})
 
 target_include_directories(Diligent-ShaderTools 
 PUBLIC
-    include
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 PRIVATE
     ../GraphicsEngine/include
 )
 
 if (DXC_SUPPORTED)
-    target_include_directories(Diligent-ShaderTools PUBLIC ../../ThirdParty/DirectXShaderCompiler)
+    target_include_directories(Diligent-ShaderTools
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ThirdParty/DirectXShaderCompiler>
+    )
 endif()
 
 target_link_libraries(Diligent-ShaderTools 
@@ -147,4 +150,5 @@ set_target_properties(Diligent-ShaderTools PROPERTIES
 
 if(DILIGENT_INSTALL_CORE)
     install_core_lib(Diligent-ShaderTools)
+    install_core_lib_and_export(Diligent-ShaderTools)
 endif()
