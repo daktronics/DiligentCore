@@ -96,7 +96,7 @@ PRIVATE
 if (DXC_SUPPORTED)
     target_include_directories(Diligent-ShaderTools
     PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ThirdParty/DirectXShaderCompiler>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/DirectXShaderCompiler>
     )
 endif()
 
