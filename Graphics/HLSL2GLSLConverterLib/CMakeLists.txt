@@ -34,9 +34,9 @@ add_library(Diligent-HLSL2GLSLConverterLib STATIC
 )
 set_common_target_properties(Diligent-HLSL2GLSLConverterLib)
 
-target_include_directories(Diligent-HLSL2GLSLConverterLib
-PUBLIC
-    interface
+target_include_directories(Diligent-HLSL2GLSLConverterLib 
+PUBLIC 
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface>
 PRIVATE
     include
 )
@@ -74,4 +74,5 @@ set_target_properties(Diligent-HLSL2GLSLConverterLib PROPERTIES
 
 if(DILIGENT_INSTALL_CORE)
     install_core_lib(Diligent-HLSL2GLSLConverterLib)
+    install_core_lib_and_export(Diligent-HLSL2GLSLConverterLib)
 endif()
