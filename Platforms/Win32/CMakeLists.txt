@@ -17,7 +17,7 @@ set(SOURCE
     src/Win32FileSystem.cpp
 )
 
-add_library(Diligent-Win32Platform ${SOURCE} ${INTERFACE} ${PLATFORM_INTERFACE_HEADERS})
+add_library(Diligent-Win32Platform STATIC ${SOURCE} ${INTERFACE} ${PLATFORM_INTERFACE_HEADERS})
 set_common_target_properties(Diligent-Win32Platform)
 
 get_target_relative_dir(Diligent-BasicPlatform WIN32_PLATFORM_DIR)
