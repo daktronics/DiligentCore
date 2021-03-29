@@ -25,7 +25,6 @@ get_target_relative_dir(Diligent-BasicPlatform WIN32_PLATFORM_DIR)
 target_include_directories(Diligent-Win32Platform 
 PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface>
-    $<INSTALL_INTERFACE:include/${WIN32_PLATFORM_DIR}/interface>
 )
 
 target_link_libraries(Diligent-Win32Platform 

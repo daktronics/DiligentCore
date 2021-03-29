@@ -28,7 +28,7 @@ get_target_relative_dir(Diligent-BasicPlatform BASIC_PLATFORM_DIR)
 target_include_directories(Diligent-BasicPlatform 
 PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface>
-    $<INSTALL_INTERFACE:include/${BASIC_PLATFORM_DIR}/interface>
+    $<INSTALL_INTERFACE:include/${BASIC_PLATFORM_DIR}/../interface>
 )
 
 target_link_libraries(Diligent-BasicPlatform 
