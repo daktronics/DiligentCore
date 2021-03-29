@@ -47,11 +47,11 @@ set_target_properties(Diligent-BasicPlatform PROPERTIES
 
 
 if(DILIGENT_INSTALL_CORE)
-    if(NOT ${DILIGENT_USE_VCPKG})
+    #if(NOT ${DILIGENT_USE_VCPKG})
         install_core_lib(Diligent-BasicPlatform)
-    else()
+    #else()
         install_core_lib_and_export(Diligent-BasicPlatform)
-    endif()
+    #endif()
     install(DIRECTORY    "../interface"
             DESTINATION  "${CMAKE_INSTALL_INCLUDEDIR}/${BASIC_PLATFORM_DIR}/../"
     )
