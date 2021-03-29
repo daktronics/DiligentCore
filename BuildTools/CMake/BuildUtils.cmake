@@ -339,7 +339,7 @@ function(install_core_lib _TARGET)
         install(TARGETS                 ${_TARGET}
                 ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}/${DILIGENT_CORE_DIR}/$<CONFIG>"
                 LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}/${DILIGENT_CORE_DIR}/$<CONFIG>"
-                RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}/${DILIGENT_CORE_DIR}/$<CONFIG>"
+                RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
         )
         install(EXPORT ${_TARGET}Target
                 FILE ${_TARGET}-target.cmake
@@ -347,7 +347,7 @@ function(install_core_lib _TARGET)
                 DESTINATION lib/cmake/diligent
         )
         if (DILIGENT_INSTALL_PDB)
-            install(FILES $<TARGET_PDB_FILE:${_TARGET}> DESTINATION "${CMAKE_INSTALL_BINDIR}/${DILIGENT_CORE_DIR}/$<CONFIG>" OPTIONAL)
+            install(FILES $<TARGET_PDB_FILE:${_TARGET}> DESTINATION "${CMAKE_INSTALL_BINDIR}" OPTIONAL)
         endif()
     endif()
 
