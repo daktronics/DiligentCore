@@ -20,9 +20,12 @@ set(SOURCE
 add_library(Diligent-Win32Platform ${SOURCE} ${INTERFACE} ${PLATFORM_INTERFACE_HEADERS})
 set_common_target_properties(Diligent-Win32Platform)
 
+get_target_relative_dir(Diligent-BasicPlatform WIN32_PLATFORM_DIR)
+
 target_include_directories(Diligent-Win32Platform 
 PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface>
+    $<INSTALL_INTERFACE:include/${WIN32_PLATFORM_DIR}/interface>
 )
 
 target_link_libraries(Diligent-Win32Platform 
@@ -43,6 +46,9 @@ set_target_properties(Diligent-Win32Platform PROPERTIES
 )
 
 if(DILIGENT_INSTALL_CORE)
-    install_core_lib(Diligent-Win32Platform)
-    install_core_lib_and_export(Diligent-Win32Platform)
+    if(NOT ${DILIGENT_USE_VCPKG})
+        install_core_lib(Diligent-Win32Platform)
+    else()
+        install_core_lib_and_export(Diligent-Win32Platform)
+    endif()
 endif()

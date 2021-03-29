@@ -23,9 +23,12 @@ endif()
 add_library(Diligent-BasicPlatform STATIC ${SOURCE} ${INTERFACE})
 set_common_target_properties(Diligent-BasicPlatform)
 
+get_target_relative_dir(Diligent-BasicPlatform BASIC_PLATFORM_DIR)
+
 target_include_directories(Diligent-BasicPlatform 
 PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface>
+    $<INSTALL_INTERFACE:include/${BASIC_PLATFORM_DIR}/interface>
 )
 
 target_link_libraries(Diligent-BasicPlatform 
@@ -44,9 +47,11 @@ set_target_properties(Diligent-BasicPlatform PROPERTIES
 
 
 if(DILIGENT_INSTALL_CORE)
-    install_core_lib(Diligent-BasicPlatform)
-    install_core_lib_and_export(Diligent-BasicPlatform)
-    get_target_relative_dir(Diligent-BasicPlatform BASIC_PLATFORM_DIR)
+    if(NOT ${DILIGENT_USE_VCPKG})
+        install_core_lib(Diligent-BasicPlatform)
+    else()
+        install_core_lib_and_export(Diligent-BasicPlatform)
+    endif()
     install(DIRECTORY    "../interface"
             DESTINATION  "${CMAKE_INSTALL_INCLUDEDIR}/${BASIC_PLATFORM_DIR}/../"
     )
