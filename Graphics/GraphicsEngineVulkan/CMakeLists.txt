@@ -149,9 +149,11 @@ set(DLL_SOURCE
 )
 
 add_library(Diligent-GraphicsEngineVkInterface INTERFACE)
+get_target_relative_dir(Diligent-GraphicsEngineVkInterface TARGET_RELATIVE_PATH)
 target_include_directories(Diligent-GraphicsEngineVkInterface
 INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface>
+    $<INSTALL_INTERFACE:include/${TARGET_RELATIVE_PATH}/interface>
 )
 target_link_libraries(Diligent-GraphicsEngineVkInterface 
 INTERFACE 

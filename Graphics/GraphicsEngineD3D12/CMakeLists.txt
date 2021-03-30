@@ -162,9 +162,16 @@ endforeach(SRC_SHADER)
 set_source_files_properties(${COMPILED_SHADERS} PROPERTIES GENERATED TRUE)
 
 add_library(Diligent-GraphicsEngineD3D12Interface INTERFACE)
-target_link_libraries     (Diligent-GraphicsEngineD3D12Interface INTERFACE Diligent-GraphicsEngineD3DBaseInterface)
-target_include_directories(Diligent-GraphicsEngineD3D12Interface INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface>)
-
+get_target_relative_dir(Diligent-GraphicsEngineD3D12Interface TARGET_RELATIVE_PATH)
+target_include_directories(Diligent-GraphicsEngineD3D12Interface
+INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface>
+    $<INSTALL_INTERFACE:include/${TARGET_RELATIVE_PATH}/interface>
+)
+target_link_libraries(Diligent-GraphicsEngineD3D12Interface 
+INTERFACE 
+    Diligent-GraphicsEngineD3DBaseInterface
+)
 
 add_library(Diligent-GraphicsEngineD3D12-static STATIC
     ${SRC} ${INTERFACE} ${INCLUDE} ${SHADERS}
