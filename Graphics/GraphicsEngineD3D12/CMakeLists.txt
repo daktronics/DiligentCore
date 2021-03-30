@@ -132,9 +132,11 @@ set_source_files_properties(${SHADERS} PROPERTIES
 )
 
 add_library(Diligent-GraphicsEngineD3D12Interface INTERFACE)
+get_target_relative_dir(Diligent-GraphicsEngineD3D12Interface TARGET_RELATIVE_PATH)
 target_include_directories(Diligent-GraphicsEngineD3D12Interface
 INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface>
+    $<INSTALL_INTERFACE:include/${TARGET_RELATIVE_PATH}/interface>
 )
 target_link_libraries(Diligent-GraphicsEngineD3D12Interface 
 INTERFACE 

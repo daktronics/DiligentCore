@@ -31,9 +31,12 @@ set(INTERFACE
 add_library(Diligent-PrimitivesInterface INTERFACE ${INTERFACE})
 set_common_target_properties(Diligent-PrimitivesInterface)
 
+get_target_relative_dir(Diligent-PrimitivesInterface TARGET_RELATIVE_PATH)
+
 target_include_directories(Diligent-PrimitivesInterface
 INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface>
+    $<INSTALL_INTERFACE:include/${TARGET_RELATIVE_PATH}/interface>
 )
 
 add_library(Diligent-Primitives STATIC ${INTERFACE} ${SOURCE})
