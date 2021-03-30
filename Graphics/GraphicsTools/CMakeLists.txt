@@ -55,7 +55,7 @@ get_target_relative_dir(Diligent-GraphicsTools TARGET_RELATIVE_PATH)
 target_include_directories(Diligent-GraphicsTools 
 PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface>
-    $<INSTALL_INTERFACE:include/${TARGET_RELATIVE_PATH}/include>
+    $<INSTALL_INTERFACE:include/${TARGET_RELATIVE_PATH}/interface>
 PRIVATE
     ../GraphicsEngineD3DBase/include
 )
