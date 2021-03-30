@@ -48,11 +48,14 @@ set(SOURCE
 
 add_library(Diligent-Common STATIC ${SOURCE} ${INCLUDE} ${INTERFACE})
 
+get_target_relative_dir(Diligent-Common COMMON_DIR)
+
 target_include_directories(Diligent-Common 
 PRIVATE
     include
 PUBLIC 
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface>
+    $<INSTALL_INTERFACE:include/${COMMON_DIR}/interface>
 )
 
 target_link_libraries(Diligent-Common 

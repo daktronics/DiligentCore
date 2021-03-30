@@ -84,11 +84,14 @@ set(SOURCE
 add_library(Diligent-GraphicsEngine STATIC ${SOURCE} ${INTERFACE} ${INCLUDE})
 set_common_target_properties(Diligent-GraphicsEngine)
 
+get_target_relative_dir(Diligent-GraphicsEngine GRAPHICS_ENGINE_DIR)
+
 target_include_directories(Diligent-GraphicsEngine 
 PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface>
+    $<INSTALL_INTERFACE:include/${GRAPHICS_ENGINE_DIR}/interface>
 )
 
 target_link_libraries(Diligent-GraphicsEngine 
