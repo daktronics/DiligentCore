@@ -45,9 +45,9 @@ set_target_properties(Diligent-Win32Platform PROPERTIES
 )
 
 if(DILIGENT_INSTALL_CORE)
-    if(NOT ${DILIGENT_USE_VCPKG})
+    #if(NOT ${DILIGENT_USE_VCPKG})
         install_core_lib(Diligent-Win32Platform)
-    else()
+    #else()
         install_core_lib_and_export(Diligent-Win32Platform)
-    endif()
+    #endif()
 endif()
