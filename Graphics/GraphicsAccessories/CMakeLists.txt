@@ -23,9 +23,12 @@ set(SOURCE
 
 add_library(Diligent-GraphicsAccessories STATIC ${SOURCE} ${INTERFACE})
 
+get_target_relative_dir(Diligent-GraphicsAccessories TARGET_RELATIVE_PATH)
+
 target_include_directories(Diligent-GraphicsAccessories 
 PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface>
+    $<INSTALL_INTERFACE:include/${TARGET_RELATIVE_PATH}/interface
 )
 
 target_link_libraries(Diligent-GraphicsAccessories 
