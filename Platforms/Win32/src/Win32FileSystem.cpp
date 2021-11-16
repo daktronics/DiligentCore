@@ -1,27 +1,27 @@
 /*
  *  Copyright 2019-2021 Diligent Graphics LLC
  *  Copyright 2015-2019 Egor Yusov
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  In no event and under no legal theory, whether in tort (including negligence), 
- *  contract, or otherwise, unless required by applicable law (such as deliberate 
+ *  In no event and under no legal theory, whether in tort (including negligence),
+ *  contract, or otherwise, unless required by applicable law (such as deliberate
  *  and grossly negligent acts) or agreed to in writing, shall any Contributor be
- *  liable for any damages, including any direct, indirect, special, incidental, 
- *  or consequential damages of any character arising as a result of this License or 
- *  out of the use or inability to use the software (including but not limited to damages 
- *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and 
- *  all other commercial damages or losses), even if such Contributor has been advised 
+ *  liable for any damages, including any direct, indirect, special, incidental,
+ *  or consequential damages of any character arising as a result of this License or
+ *  out of the use or inability to use the software (including but not limited to damages
+ *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and
+ *  all other commercial damages or losses), even if such Contributor has been advised
  *  of the possibility of such damages.
  */
 
@@ -29,7 +29,7 @@
 #include "Errors.hpp"
 #include "../../Common/interface/StringTools.hpp"
 
-// We can't use namespace Diligent before #including <Windows.h> because Diligent::INTERFACE_ID will confilct with windows InterfaceID
+// We can't use namespace Diligent before #including <Windows.h> because Diligent::INTERFACE_ID will conflict with windows InterfaceID
 //using namespace Diligent;
 
 // Windows.h defines CreateDirectory and DeleteFile as macros.
@@ -72,7 +72,7 @@ static std::vector<wchar_t> UTF8ToUTF16(LPCSTR lpUTF8)
 }
 
 WindowsFile::WindowsFile(const FileOpenAttribs& OpenAttribs) :
-    StandardFile(OpenAttribs, WindowsFileSystem::GetSlashSymbol())
+    StandardFile{OpenAttribs, WindowsFileSystem::GetSlashSymbol()}
 {
     VERIFY_EXPR(m_pFile == nullptr);
     auto OpenModeStr = WidenString(GetOpenModeStr());
@@ -99,7 +99,7 @@ WindowsFile::WindowsFile(const FileOpenAttribs& OpenAttribs) :
             char errstr[128];
             strerror_s(errstr, _countof(errstr), err);
             LOG_ERROR_AND_THROW("Failed to open file ", m_OpenAttribs.strFilePath,
-                                "\nThe following error occured: ", errstr);
+                                "\nThe following error occurred: ", errstr);
         }
     }
 }
@@ -342,37 +342,58 @@ std::string GetCurrentDirectoryImpl()
 {
     std::string CurrDir;
 
-    // If the function succeeds, the return value specifies the number of characters that are
-    // written to the buffer, not including the terminating null character.
-    auto NumChars = GetCurrentDirectoryA(0, nullptr);
+    // If the function succeeds, the return value specifies the number of characters that
+    // are written to the buffer, NOT including the terminating null character.
+    // HOWEVER, if the buffer that is pointed to by lpBuffer is not large enough,
+    // the return value specifies the required size of the buffer, in characters,
+    // INCLUDING the null-terminating character.
+    // https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getcurrentdirectory
+    auto BufferSize = GetCurrentDirectoryA(0, nullptr);
 
-    if (NumChars > 0)
+    if (BufferSize > 1)
     {
-        auto BufferSize = NumChars + 1;
-        CurrDir.resize(NumChars); // Resize the string to a length of NumChars characters.
+        // Note that std::string::resize(n) resizes the string to a length of n characters.
+        CurrDir.resize(BufferSize - 1);
 
         // BufferSize must include room for a terminating null character.
-        // https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getcurrentdirectory
-        GetCurrentDirectoryA(BufferSize, &CurrDir[0]);
+        auto NumChars = GetCurrentDirectoryA(BufferSize, &CurrDir[0]);
+        VERIFY_EXPR(CurrDir.length() == NumChars);
     }
     return CurrDir;
 }
 
-bool WindowsFileSystem::GetRelativePath(const Diligent::Char* strPathFrom,
+bool WindowsFileSystem::GetRelativePath(const Diligent::Char* _strPathFrom,
                                         bool                  IsFromDirectory,
-                                        const Diligent::Char* strPathTo,
+                                        const Diligent::Char* _strPathTo,
                                         bool                  IsToDirectory,
                                         std::string&          RelativePath)
 {
-    VERIFY_EXPR(strPathTo != nullptr);
+    VERIFY(_strPathTo != nullptr, "Destination path must not be null");
+
+    const auto SlashSym = WindowsFileSystem::GetSlashSymbol();
+
+    std::string PathFrom;
+    if (_strPathFrom != nullptr)
+    {
+        PathFrom = _strPathFrom;
+        WindowsFileSystem::CorrectSlashes(PathFrom, SlashSym);
+    }
+    else
+    {
+        PathFrom        = GetCurrentDirectoryImpl();
+        IsFromDirectory = true;
+    }
+
+    std::string PathTo{_strPathTo};
+    WindowsFileSystem::CorrectSlashes(PathTo, SlashSym);
 
     // https://docs.microsoft.com/en-us/windows/win32/api/shlwapi/nf-shlwapi-pathrelativepathtoa
     char strRelativePath[MAX_PATH];
 
     auto Res = PathRelativePathToA(strRelativePath,
-                                   strPathFrom != nullptr ? strPathFrom : GetCurrentDirectoryImpl().c_str(),
-                                   (strPathFrom == nullptr || IsFromDirectory) ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL,
-                                   strPathTo,
+                                   PathFrom.c_str(),
+                                   IsFromDirectory ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL,
+                                   PathTo.c_str(),
                                    IsToDirectory ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL);
 
     if (Res != FALSE)
@@ -381,7 +402,7 @@ bool WindowsFileSystem::GetRelativePath(const Diligent::Char* strPathFrom,
     }
     else
     {
-        RelativePath = strPathFrom;
+        RelativePath = std::move(PathTo);
     }
 
     return Res != FALSE;

@@ -62,22 +62,22 @@ vec4 VerifyResources()
 
     AllCorrect *= CheckValue(g_StorageBuffArr_Dyn[0].data, BuffArr_Dyn_Ref0);
     AllCorrect *= CheckValue(g_StorageBuffArr_Dyn[1].data, BuffArr_Dyn_Ref1);
-#endif    
+#endif
 
-	return AllCorrect;
+    return AllCorrect;
 }
 
 #ifdef VERTEX_SHADER
 
 //To use any built-in input or output in the gl_PerVertex and
 //gl_PerFragment blocks in separable program objects, shader code must
-//redeclare those blocks prior to use. 
+//redeclare those blocks prior to use.
 //
 // Declaring this block causes compilation error on NVidia GLES
 #ifndef GL_ES
 out gl_PerVertex
 {
-	vec4 gl_Position;
+    vec4 gl_Position;
 };
 #endif
 
@@ -98,13 +98,13 @@ void main()
     Col[0] = vec4(1.0, 0.0, 0.0, 1.0);
     Col[1] = vec4(0.0, 1.0, 0.0, 1.0);
     Col[2] = vec4(0.0, 0.0, 1.0, 1.0);
-    
+
 #ifdef VULKAN
     gl_Position = Pos[gl_VertexIndex];
     out_Color = Col[gl_VertexIndex % 3] * VerifyResources();
 #else
     gl_Position = Pos[gl_VertexID];
-    out_Color = Col[gl_VertexIndex % 3] * VerifyResources();
+    out_Color = Col[gl_VertexID % 3] * VerifyResources();
 #endif
 }
 #endif

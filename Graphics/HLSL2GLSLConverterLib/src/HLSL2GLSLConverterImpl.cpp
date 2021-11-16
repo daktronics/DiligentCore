@@ -1,27 +1,27 @@
 /*
  *  Copyright 2019-2021 Diligent Graphics LLC
  *  Copyright 2015-2019 Egor Yusov
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  In no event and under no legal theory, whether in tort (including negligence), 
- *  contract, or otherwise, unless required by applicable law (such as deliberate 
+ *  In no event and under no legal theory, whether in tort (including negligence),
+ *  contract, or otherwise, unless required by applicable law (such as deliberate
  *  and grossly negligent acts) or agreed to in writing, shall any Contributor be
- *  liable for any damages, including any direct, indirect, special, incidental, 
- *  or consequential damages of any character arising as a result of this License or 
- *  out of the use or inability to use the software (including but not limited to damages 
- *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and 
- *  all other commercial damages or losses), even if such Contributor has been advised 
+ *  liable for any damages, including any direct, indirect, special, incidental,
+ *  or consequential damages of any character arising as a result of this License or
+ *  out of the use or inability to use the software (including but not limited to damages
+ *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and
+ *  all other commercial damages or losses), even if such Contributor has been advised
  *  of the possibility of such damages.
  */
 
@@ -528,7 +528,7 @@ HLSL2GLSLConverterImpl::HLSL2GLSLConverterImpl()
     //                          sampler  usampler  isampler sampler*Shadow
     const String Prefixes[] = {"", "u", "i", ""};
     const String Suffixes[] = {"", "", "", "Shadow"};
-    for (int i = 0; i < _countof(Prefixes); ++i)
+    for (size_t i = 0; i < _countof(Prefixes); ++i)
     {
         const auto& Pref = Prefixes[i];
         const auto& Suff = Suffixes[i];
@@ -586,7 +586,7 @@ HLSL2GLSLConverterImpl::HLSL2GLSLConverterImpl()
     }
 
     String Dimensions[] = {"1D", "1DArray", "2D", "2DArray", "3D", "Cube", "CubeArray"};
-    for (int d = 0; d < _countof(Dimensions); ++d)
+    for (size_t d = 0; d < _countof(Dimensions); ++d)
     {
         String Dim = Dimensions[d];
         for (int i = 0; i < 3; ++i)
@@ -897,7 +897,7 @@ String HLSL2GLSLConverterImpl::ConversionStream::PrintTokenContext(IteratorType&
             }
         }
 
-        // Acumulate spaces until we encounter current token
+        // Accumulate spaces until we encounter current token
         if (Token == TargetToken)
             AccumWhiteSpaces = false;
 
@@ -1114,7 +1114,7 @@ void ReadNumericConstant(const String& Source, String::const_iterator& Pos, Stri
 }
 
 
-// The function convertes source code into a token list
+// The function converts source code into a token list
 void HLSL2GLSLConverterImpl::ConversionStream::Tokenize(const String& Source)
 {
 #define CHECK_END(...)                      \
@@ -1290,7 +1290,7 @@ void HLSL2GLSLConverterImpl::ConversionStream::Tokenize(const String& Source)
             case '"':
                 //[domain("quad")]
                 //        ^
-                NewToken.Type = TokenType::SrtingConstant;
+                NewToken.Type = TokenType::StringConstant;
                 ++SrcPos;
                 //[domain("quad")]
                 //         ^
@@ -1645,7 +1645,7 @@ void HLSL2GLSLConverterImpl::ConversionStream::RegisterStruct(TokenListType::ite
 // hash table. The hash table indicates if the sampler is comparison or not. It is required to
 // match HLSL texture declaration to sampler* or sampler*Shadow.
 //
-// GLSL only allows samplers as uniform variables and function agruments. It does not allow
+// GLSL only allows samplers as uniform variables and function arguments. It does not allow
 // local variables of sampler type. So the two possible scopes the function can process are
 // global scope and the function argument list.
 //
@@ -1742,7 +1742,7 @@ void HLSL2GLSLConverterImpl::ConversionStream::ParseSamplers(TokenListType::iter
 
                 if (IsFunctionArgumentList)
                 {
-                    // In function argument list, every arument
+                    // In function argument list, every argument
                     // has its own type declaration
                     break;
                 }
@@ -1771,7 +1771,7 @@ void HLSL2GLSLConverterImpl::ConversionStream::ParseSamplers(TokenListType::iter
         else
             ++Token;
     }
-    VERIFY_PARSER_STATE(Token, ScopeDepth == 1 && Token == m_Tokens.end() || ScopeDepth == 0, "Error parsing scope");
+    VERIFY_PARSER_STATE(Token, (ScopeDepth == 1 && Token == m_Tokens.end()) || ScopeDepth == 0, "Error parsing scope");
 }
 
 void ParseImageFormat(const String& Comment, String& ImageFormat)
@@ -2205,7 +2205,7 @@ Uint32 HLSL2GLSLConverterImpl::ConversionStream::CountFunctionArguments(TokenLis
     ProcessScope(
         Token, ScopeEnd, TokenType::OpenBracket, TokenType::ClosingBracket,
         [&](TokenListType::iterator& tkn, int ScopeDepth) {
-            // Argument list is not empty, so there is at least one arument.
+            // Argument list is not empty, so there is at least one argument.
             if (NumArguments == 0)
                 NumArguments = 1;
             // Number of additional arguments equals the number of commas
@@ -2686,7 +2686,7 @@ bool HLSL2GLSLConverterImpl::ConversionStream::ProcessRWTextureLoad(TokenListTyp
 
     Token = OpenStapleToken;
 
-    // Note that 'Location' may require furhter conversion
+    // Note that 'Location' may require further conversion
 
     return true;
 }
@@ -2786,7 +2786,7 @@ void HLSL2GLSLConverterImpl::ConversionStream::ProcessAtomics(const TokenListTyp
                 // InterlockedAdd(Tex2D[GTid.xy], 1, iOldVal);
                 //                ^
                 auto StubIt = m_Converter.m_GLSLStubs.find(FunctionStubHashKey("image", OperationToken->Literal.c_str(), NumArguments));
-                VERIFY_PARSER_STATE(OperationToken, StubIt != m_Converter.m_GLSLStubs.end(), "Unable to find function stub for funciton ", OperationToken->Literal, " with ", NumArguments, " arguments");
+                VERIFY_PARSER_STATE(OperationToken, StubIt != m_Converter.m_GLSLStubs.end(), "Unable to find function stub for function ", OperationToken->Literal, " with ", NumArguments, " arguments");
 
                 // Find first comma
                 int NumOpenBrackets = 1;
@@ -2836,7 +2836,7 @@ void HLSL2GLSLConverterImpl::ConversionStream::ProcessAtomics(const TokenListTyp
                 // InterlockedAdd(g_i4SharedArray[GTid.x].x, 1, iOldVal);
                 //                ^
                 auto StubIt = m_Converter.m_GLSLStubs.find(FunctionStubHashKey("shared_var", OperationToken->Literal.c_str(), NumArguments));
-                VERIFY_PARSER_STATE(OperationToken, StubIt != m_Converter.m_GLSLStubs.end(), "Unable to find function stub for funciton ", OperationToken->Literal, " with ", NumArguments, " arguments");
+                VERIFY_PARSER_STATE(OperationToken, StubIt != m_Converter.m_GLSLStubs.end(), "Unable to find function stub for function ", OperationToken->Literal, " with ", NumArguments, " arguments");
                 OperationToken->Literal = StubIt->second.Name;
                 // InterlockedAddSharedVar_3(g_i4SharedArray[GTid.x].x, 1, iOldVal);
             }
@@ -3065,6 +3065,7 @@ void HLSL2GLSLConverterImpl::ConversionStream::ProcessFunctionParameters(TokenLi
                     // ^
                     ParamInfo.GSAttribs.PrimType = ShaderParameterInfo::GSAttributes::PrimitiveType::TriangleAdj;
                     ++Token;
+                    break;
 
                 case TokenType::kw_TriangleStream:
                 case TokenType::kw_PointStream:
@@ -3098,17 +3099,17 @@ void HLSL2GLSLConverterImpl::ConversionStream::ProcessFunctionParameters(TokenLi
                         VERIFY_PARSER_STATE(Token, Token != m_Tokens.end() && Token->Literal == "<", "Angle bracket expected");
                         // inout LineStream<GSOut> lnStream
                         //                 ^
-                        auto OpenAngleBarcket = Token++;
-                        m_Tokens.erase(OpenAngleBarcket);
+                        auto OpenAngleBracket = Token++;
+                        m_Tokens.erase(OpenAngleBracket);
                         // inout LineStream GSOut> lnStream
                         //                  ^
 
                         VERIFY_PARSER_STATE(Token, Token != m_Tokens.end(), "Unexpected EOF");
 
-                        auto ClosingAngleBarcket = Token;
-                        ++ClosingAngleBarcket;
-                        VERIFY_PARSER_STATE(ClosingAngleBarcket, ClosingAngleBarcket != m_Tokens.end() && ClosingAngleBarcket->Literal == ">", "Angle bracket expected");
-                        m_Tokens.erase(ClosingAngleBarcket);
+                        auto ClosingAngleBracket = Token;
+                        ++ClosingAngleBracket;
+                        VERIFY_PARSER_STATE(ClosingAngleBracket, ClosingAngleBracket != m_Tokens.end() && ClosingAngleBracket->Literal == ">", "Angle bracket expected");
+                        m_Tokens.erase(ClosingAngleBracket);
                         // inout LineStream GSOut lnStream
                         //                  ^
                     }
@@ -3124,8 +3125,8 @@ void HLSL2GLSLConverterImpl::ConversionStream::ProcessFunctionParameters(TokenLi
                     VERIFY_PARSER_STATE(Token, Token != m_Tokens.end() && Token->Literal == "<", "Angle bracket expected");
                     // HSOutput main(InputPatch<VSOutput, 1> inputPatch, uint uCPID : SV_OutputControlPointID)
                     //                         ^
-                    auto OpenAngleBarcket = Token++;
-                    m_Tokens.erase(OpenAngleBarcket);
+                    auto OpenAngleBracket = Token++;
+                    m_Tokens.erase(OpenAngleBracket);
                     // HSOutput main(InputPatch VSOutput, 1> inputPatch, uint uCPID : SV_OutputControlPointID)
                     //                          ^
 
@@ -3189,7 +3190,7 @@ void HLSL2GLSLConverterImpl::ConversionStream::ProcessFunctionParameters(TokenLi
             //                                     ^
             //                                SemanticToken
             VERIFY_PARSER_STATE(SemanticToken, SemanticToken != m_Tokens.end(), "Unexpected EOF");
-            VERIFY_PARSER_STATE(SemanticToken, SemanticToken->Type == TokenType::Identifier, "Exepcted semantic for the return argument ");
+            VERIFY_PARSER_STATE(SemanticToken, SemanticToken->Type == TokenType::Identifier, "Expected semantic for the return argument ");
             // Transform to lower case -  semantics are case-insensitive
             RetParam.Semantic = StrToLower(SemanticToken->Literal);
             ++SemanticToken;
@@ -3380,7 +3381,7 @@ void HLSL2GLSLConverterImpl::ConversionStream::ProcessFragmentShaderArguments(st
                     {
                         const auto& Semantic   = Param.Semantic;
                         auto        RTIndexPos = Semantic.begin();
-                        int         RTIndex    = -1;
+                        Uint32      RTIndex    = ~0u;
                         if (SkipPrefix("sv_target", RTIndexPos, Semantic.end()))
                         {
                             if (RTIndexPos != Semantic.end())
@@ -3389,14 +3390,14 @@ void HLSL2GLSLConverterImpl::ConversionStream::ProcessFragmentShaderArguments(st
                                 {
                                     RTIndex = *RTIndexPos - '0';
                                     if ((RTIndexPos + 1) != Semantic.end())
-                                        RTIndex = -1;
+                                        RTIndex = ~0u;
                                 }
                             }
                             else
                                 RTIndex = 0;
                         }
 
-                        if (RTIndex >= 0 && RTIndex < MAX_RENDER_TARGETS)
+                        if (RTIndex < MAX_RENDER_TARGETS)
                         {
                             // Layout location qualifiers are allowed on FS outputs even in GLES3.0
                             String OutVarName = BuildParameterName(MemberStack, '_', "_psout_");
@@ -3512,7 +3513,7 @@ void HLSL2GLSLConverterImpl::ConversionStream::ProcessGeometryShaderArguments(To
     ProcessShaderAttributes(Token, Attributes);
     auto MaxVertexCountIt = Attributes.find("maxvertexcount");
     if (MaxVertexCountIt == Attributes.end())
-        LOG_ERROR_AND_THROW("Geomtry shader \"", Token->Literal, "\" misses \"maxvertexcount\" attribute");
+        LOG_ERROR_AND_THROW("Geometry shader \"", Token->Literal, "\" misses \"maxvertexcount\" attribute");
     const Char* MaxVertexCount = MaxVertexCountIt->second.c_str();
 
     stringstream GlobalVarsSS, PrologueSS, InterfaceVarsInSS, InterfaceVarsOutSS, EmitVertexDefineSS;
@@ -3529,46 +3530,64 @@ void HLSL2GLSLConverterImpl::ConversionStream::ProcessGeometryShaderArguments(To
         if (TopLevelParam.storageQualifier == ShaderParameterInfo::StorageQualifier::In)
         {
             if (TopLevelParam.GSAttribs.PrimType == ShaderParameterInfo::GSAttributes::PrimitiveType::Undefined)
-                LOG_ERROR_AND_THROW("Geometry shader input misses primitive type");
-
-            const Char* GLLayout = nullptr;
-            switch (TopLevelParam.GSAttribs.PrimType)
             {
-                // clang-format off
-                case ShaderParameterInfo::GSAttributes::PrimitiveType::Point:        GLLayout = "points";               break;
-                case ShaderParameterInfo::GSAttributes::PrimitiveType::Line:         GLLayout = "lines";                break;
-                case ShaderParameterInfo::GSAttributes::PrimitiveType::Triangle:     GLLayout = "triangles";            break;
-                case ShaderParameterInfo::GSAttributes::PrimitiveType::LineAdj:      GLLayout = "lines_adjacency";      break;
-                case ShaderParameterInfo::GSAttributes::PrimitiveType::TriangleAdj:  GLLayout = "triangles_adjacency";  break;
-                default: LOG_ERROR_AND_THROW("Unexpected GS input primitive type");
-                // clang-format om
-            }
-            GlobalVarsSS << "layout (" << GLLayout << ") in;\n";
-            PrologueSS << "    const int _NumElements = " << TopLevelParam.ArraySize << ";\n";
-            PrologueSS << "    " << TopLevelParam.Type << ' ' << TopLevelParam.Name << "[_NumElements];\n";
-            PrologueSS << "    for(int i=0; i < _NumElements; ++i)\n    {\n";
-
-            ProcessShaderArgument(
-                TopLevelParam, GSInd, InVar, PrologueSS,
-                [&](const std::vector<const ShaderParameterInfo*>& MemberStack, const ShaderParameterInfo& Param, const String& Getter) //
-                {
-                    String FullIndexedParamName = BuildParameterName(MemberStack, '.', "", "", "[i]");
-                    PrologueSS << "    ";
-                    if (!Getter.empty())
-                        PrologueSS << "    " << Getter << '(' << FullIndexedParamName << ");\n";
-                    else
+                // uint PrimID : SV_PrimitiveID
+                ProcessShaderArgument(
+                    TopLevelParam, GSInd, InVar, PrologueSS,
+                    [&](const std::vector<const ShaderParameterInfo*>& MemberStack, const ShaderParameterInfo& Param, const String& Getter) //
                     {
-                        auto VarName      = BuildParameterName(MemberStack, '_', m_bUseInOutLocationQualifiers ? "_gsin_" : "_");
-                        auto InputVarName = VarName + "[i]";
-                        DefineInterfaceVar(m_bUseInOutLocationQualifiers ? inLocation++ : -1,
-                                           RequiresFlatQualifier(Param.Type) ? "flat in" : "in",
-                                           Param.Type, VarName + "[]", InterfaceVarsInSS);
-                        InitVariable(FullIndexedParamName, InputVarName, PrologueSS);
-                    }
-                } //
-            );
+                        String FullParamName = BuildParameterName(MemberStack, '.');
+                        if (Getter.empty())
+                        {
+                            LOG_ERROR_AND_THROW("Unexpected input semantic \"", Param.Semantic,
+                                                "\". The only allowed semantic for the geometry shader input is \"SV_PrimitiveID\".");
+                        }
+                        PrologueSS << "    " << Getter << '(' << FullParamName << ");\n";
+                    } //
+                );
+            }
+            else
+            {
+                const Char* GLLayout = nullptr;
+                switch (TopLevelParam.GSAttribs.PrimType)
+                {
+                    // clang-format off
+                    case ShaderParameterInfo::GSAttributes::PrimitiveType::Point:        GLLayout = "points";               break;
+                    case ShaderParameterInfo::GSAttributes::PrimitiveType::Line:         GLLayout = "lines";                break;
+                    case ShaderParameterInfo::GSAttributes::PrimitiveType::Triangle:     GLLayout = "triangles";            break;
+                    case ShaderParameterInfo::GSAttributes::PrimitiveType::LineAdj:      GLLayout = "lines_adjacency";      break;
+                    case ShaderParameterInfo::GSAttributes::PrimitiveType::TriangleAdj:  GLLayout = "triangles_adjacency";  break;
+                    // clang-format on
+                    default:
+                        LOG_ERROR_AND_THROW("Unexpected GS input primitive type");
+                }
+                GlobalVarsSS << "layout (" << GLLayout << ") in;\n";
+                PrologueSS << "    const int _NumElements = " << TopLevelParam.ArraySize << ";\n";
+                PrologueSS << "    " << TopLevelParam.Type << ' ' << TopLevelParam.Name << "[_NumElements];\n";
+                PrologueSS << "    for(int i=0; i < _NumElements; ++i)\n    {\n";
 
-            PrologueSS << "    }\n";
+                ProcessShaderArgument(
+                    TopLevelParam, GSInd, InVar, PrologueSS,
+                    [&](const std::vector<const ShaderParameterInfo*>& MemberStack, const ShaderParameterInfo& Param, const String& Getter) //
+                    {
+                        String FullIndexedParamName = BuildParameterName(MemberStack, '.', "", "", "[i]");
+                        PrologueSS << "    ";
+                        if (!Getter.empty())
+                            PrologueSS << "    " << Getter << '(' << FullIndexedParamName << ");\n";
+                        else
+                        {
+                            auto VarName      = BuildParameterName(MemberStack, '_', m_bUseInOutLocationQualifiers ? "_gsin_" : "_");
+                            auto InputVarName = VarName + "[i]";
+                            DefineInterfaceVar(m_bUseInOutLocationQualifiers ? inLocation++ : -1,
+                                               RequiresFlatQualifier(Param.Type) ? "flat in" : "in",
+                                               Param.Type, VarName + "[]", InterfaceVarsInSS);
+                            InitVariable(FullIndexedParamName, InputVarName, PrologueSS);
+                        }
+                    } //
+                );
+
+                PrologueSS << "    }\n";
+            }
         }
         else if (TopLevelParam.storageQualifier == ShaderParameterInfo::StorageQualifier::InOut)
         {
@@ -3699,7 +3718,9 @@ void HLSL2GLSLConverterImpl::ConversionStream::ProcessComputeShaderArguments(Tok
                     String FullParamName = BuildParameterName(MemberStack, '.');
                     if (Getter.empty())
                     {
-                        LOG_ERROR_AND_THROW("Unexpected input semantic \"", Param.Semantic, "\". The only allowed semantics for the compute shader inputs are \"ATTRIB*\", \"SV_VertexID\", and \"SV_InstanceID\".");
+                        LOG_ERROR_AND_THROW("Unexpected input semantic \"", Param.Semantic,
+                                            "\". The only allowed semantics for the compute shader inputs are \"SV_DispatchThreadID\", "
+                                            "\"SV_GroupID\", \"SV_GroupThreadID\", and \"SV_GroupIndex\".");
                     }
                     PrologueSS << "    " << Getter << '(' << Param.Type << "," << FullParamName << ");\n";
                 } //
@@ -4033,6 +4054,9 @@ void HLSL2GLSLConverterImpl::ConversionStream::ProcessHullShaderArguments(TokenL
     ProcessHullShaderConstantFunction(ConstantFunc, bConstFuncTakesInputPatch);
 
     stringstream GlobalsSS;
+    (void)domain;
+    (void)partitioning;
+    (void)topology;
     // In glsl, domain, partitioning, and topology are properties of tessellation evaluation
     // shader rather than tessellation control shader
 
@@ -4049,7 +4073,7 @@ void HLSL2GLSLConverterImpl::ConversionStream::ProcessHullShaderArguments(TokenL
         case Partitioning::integer:         GlobalsSS << ", equal_spacing";           break;
         case Partitioning::fractional_even: GlobalsSS << ", fractional_even_spacing"; break;
         case Partitioning::fractional_odd:  GlobalsSS << ", fractional_odd_spacing";  break;
-        case Partitioning::pow2:            
+        case Partitioning::pow2:
             LOG_WARNING_MESSAGE( "OpenGL does not support pow2 partitioning. Using integer instead" );
             GlobalsSS << ", equal_spacing";
         break;
@@ -4242,7 +4266,7 @@ void HLSL2GLSLConverterImpl::ConversionStream::ProcessDomainShaderArguments(Toke
     auto PartitioningIt = Attributes.find("partitioning");
     if (PartitioningIt == Attributes.end())
         LOG_ERROR_AND_THROW("Undefined partitioning. In GLSL, partitioning is specified by the tessellation evaluation shader (domain shader) rather than by the tessellation control shader (hull shader)\n"
-                            "Please use the following comment right above the function declaration to deine partitioning and output topology:\n"
+                            "Please use the following comment right above the function declaration to define partitioning and output topology:\n"
                             "/* partitioning = {integer|fractional_even|fractional_odd}, outputtopology = {triangle_cw|triangle_ccw} */");
 
     if (PartitioningIt->second == "integer")
@@ -4262,7 +4286,7 @@ void HLSL2GLSLConverterImpl::ConversionStream::ProcessDomainShaderArguments(Toke
     auto TopologyIt = Attributes.find("outputtopology");
     if (TopologyIt == Attributes.end())
         LOG_ERROR_AND_THROW("Undefined outputtopology. In GLSL, outputtopology is specified by the tessellation evaluation shader (domain shader) rather than by the tessellation control shader (hull shader)\n"
-                            "Please use the following comment right above the function declaration to deine partitioning and output topology:\n"
+                            "Please use the following comment right above the function declaration to define partitioning and output topology:\n"
                             "/* partitioning = {integer|fractional_even|fractional_odd}, outputtopology = {triangle_cw|triangle_ccw} */");
 
     if (TopologyIt->second == "point")
@@ -4673,7 +4697,7 @@ void HLSL2GLSLConverterImpl::ConversionStream::RemoveSemantics()
                 }
                 else if (Token->Type == TokenType::Identifier)
                 {
-                    // Searh for "Identifier(" pattern
+                    // Search for "Identifier(" pattern
                     // In global scope this should be texture declaration
                     // It can also be other things like macro. But this is not a problem.
                     ++Token;
@@ -4842,7 +4866,7 @@ String HLSL2GLSLConverterImpl::Convert(ConversionAttribs& Attribs) const
         ConversionStream* pStream = nullptr;
         if (*Attribs.ppConversionStream != nullptr)
         {
-            pStream = ValidatedCast<ConversionStream>(*Attribs.ppConversionStream);
+            pStream = ClassPtrCast<ConversionStream>(*Attribs.ppConversionStream);
 
             const auto& FileNameFromStream = pStream->GetInputFileName();
             if (FileNameFromStream != Attribs.InputFileName)
@@ -4856,7 +4880,7 @@ String HLSL2GLSLConverterImpl::Convert(ConversionAttribs& Attribs) const
         if (*Attribs.ppConversionStream == nullptr)
         {
             CreateStream(Attribs.InputFileName, Attribs.pSourceStreamFactory, Attribs.HLSLSource, Attribs.NumSymbols, Attribs.ppConversionStream);
-            pStream = ValidatedCast<ConversionStream>(*Attribs.ppConversionStream);
+            pStream = ClassPtrCast<ConversionStream>(*Attribs.ppConversionStream);
         }
 
         return pStream->Convert(Attribs.EntryPoint, Attribs.ShaderType, Attribs.IncludeDefinitions, Attribs.SamplerSuffix, Attribs.UseInOutLocationQualifiers);

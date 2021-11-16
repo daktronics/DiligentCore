@@ -2,11 +2,11 @@ cmake_minimum_required (VERSION 3.6)
 
 project(Diligent-ShaderTools CXX)
 
-set(INCLUDE 
+set(INCLUDE
     include/ShaderToolsCommon.hpp
 )
 
-set(SOURCE 
+set(SOURCE
     src/ShaderToolsCommon.cpp
 )
 
@@ -29,6 +29,15 @@ if(ENABLE_HLSL)
     list(APPEND INCLUDE include/HLSLUtils.hpp)
 endif()
 
+if(D3D11_SUPPORTED OR D3D12_SUPPORTED)
+    set(DXBC_CHECKSUM_SOURCE
+        ../../ThirdParty/GPUOpenShaderUtils/DXBCChecksum.cpp
+        ../../ThirdParty/GPUOpenShaderUtils/DXBCChecksum.h
+    )
+    list(APPEND SOURCE src/DXBCUtils.cpp)
+    list(APPEND INCLUDE include/DXBCUtils.hpp)
+    list(APPEND INCLUDE include/ResourceBindingMap.hpp)
+endif()
 
 if((PLATFORM_WIN32 AND NOT MINGW_BUILD) OR PLATFORM_UNIVERSAL_WINDOWS OR PLATFORM_LINUX)
     set(DXC_SUPPORTED TRUE)
@@ -43,7 +52,7 @@ if (DXC_SUPPORTED)
     elseif(PLATFORM_UNIVERSAL_WINDOWS)
         list(APPEND INCLUDE include/DXCompilerBaseUWP.hpp)
     elseif(PLATFORM_LINUX)
-        list(APPEND INCLUDE include/DXCompilerBaseLiunx.hpp)
+        list(APPEND INCLUDE include/DXCompilerBaseLinux.hpp)
     else()
         message(FATAL_ERROR "Unexpected platform")
     endif()
@@ -63,30 +72,33 @@ endif()
 
 if(VULKAN_SUPPORTED OR METAL_SUPPORTED)
     set(ENABLE_SPIRV TRUE)
+    if (NOT ${DILIGENT_NO_GLSLANG})
+        set(USE_GLSLANG TRUE)
+        set(USE_SPIRV_TOOLS TRUE)
+    endif()
+    if (NOT ${DILIGENT_NO_HLSL})
+        set(USE_SPIRV_TOOLS TRUE)
+    endif()
 endif()
 
 if(ENABLE_SPIRV)
     list(APPEND SOURCE src/SPIRVShaderResources.cpp)
     list(APPEND INCLUDE include/SPIRVShaderResources.hpp)
 
-    if (NOT ${DILIGENT_NO_GLSLANG})
+    if (${USE_SPIRV_TOOLS})
+        list(APPEND SOURCE src/SPIRVTools.cpp)
+        list(APPEND INCLUDE include/SPIRVTools.hpp)
+    endif()
+
+    if (${USE_GLSLANG})
         list(APPEND SOURCE src/GLSLangUtils.cpp)
         list(APPEND INCLUDE include/GLSLangUtils.hpp)
-
-        if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-            # Disable the following warning:
-            #   moving a local object in a return statement prevents copy elision [-Wpessimizing-move]
-            set_source_files_properties(src/SPIRVUtils.cpp
-            PROPERTIES
-                COMPILE_FLAGS -Wno-pessimizing-move
-            )
-        endif()
     endif()
 endif()
 
-add_library(Diligent-ShaderTools STATIC ${SOURCE} ${INCLUDE})
+add_library(Diligent-ShaderTools STATIC ${SOURCE} ${INCLUDE} ${DXBC_CHECKSUM_SOURCE})
 
-target_include_directories(Diligent-ShaderTools 
+target_include_directories(Diligent-ShaderTools
 PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 PRIVATE
@@ -98,10 +110,15 @@ if (DXC_SUPPORTED)
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/DirectXShaderCompiler>
     )
+
+    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        target_compile_options(Diligent-ShaderTools PRIVATE -fms-extensions)
+        target_link_libraries(Diligent-ShaderTools PRIVATE dl)
+    endif()
 endif()
 
-target_link_libraries(Diligent-ShaderTools 
-PRIVATE 
+target_link_libraries(Diligent-ShaderTools
+PRIVATE
     Diligent-BuildSettings
     Diligent-GraphicsAccessories
     Diligent-Common
@@ -109,29 +126,34 @@ PUBLIC
     Diligent-GraphicsEngineInterface
 )
 
-if (VULKAN_SUPPORTED OR GL_SUPPORTED OR GLES_SUPPORTED)
-    target_compile_definitions(Diligent-ShaderTools PRIVATE DILIGENT_NO_HLSL=$<BOOL:${DILIGENT_NO_HLSL}>)
-    if (NOT ${DILIGENT_NO_HLSL})
-        target_include_directories(Diligent-ShaderTools PRIVATE ../HLSL2GLSLConverterLib/include)
-        target_link_libraries(Diligent-ShaderTools PRIVATE Diligent-HLSL2GLSLConverterLib)
-    endif()
+if (TARGET Diligent-HLSL2GLSLConverterLib AND NOT ${DILIGENT_NO_HLSL})
+    target_include_directories(Diligent-ShaderTools PRIVATE ../HLSL2GLSLConverterLib/include)
+    target_link_libraries(Diligent-ShaderTools PRIVATE Diligent-HLSL2GLSLConverterLib)
+else()
+    target_compile_definitions(Diligent-ShaderTools PRIVATE DILIGENT_NO_HLSL=1)
 endif()
 
 if(ENABLE_SPIRV)
-    target_link_libraries(Diligent-ShaderTools 
+    target_link_libraries(Diligent-ShaderTools
     PRIVATE
         spirv-cross-core
     )
 
-    if (NOT ${DILIGENT_NO_GLSLANG})
-        target_link_libraries(Diligent-ShaderTools 
+    if (${USE_SPIRV_TOOLS})
+        target_link_libraries(Diligent-ShaderTools
         PRIVATE
-            glslang
-            SPIRV
             SPIRV-Tools-opt
         )
+    endif()
 
-        target_include_directories(Diligent-ShaderTools 
+    if (${USE_GLSLANG})
+        target_link_libraries(Diligent-ShaderTools
+        PRIVATE
+            SPIRV
+            glslang
+        )
+
+        target_include_directories(Diligent-ShaderTools
         PRIVATE
             ../../ThirdParty/glslang
         )
@@ -143,6 +165,9 @@ set_common_target_properties(Diligent-ShaderTools)
 source_group("src" FILES ${SOURCE})
 source_group("include" FILES ${INCLUDE})
 source_group("interface" FILES ${INTERFACE})
+if (DXBC_CHECKSUM_SOURCE)
+    source_group("ThirdParty\\DXBCChecksum" FILES ${DXBC_CHECKSUM_SOURCE})
+endif()
 
 set_target_properties(Diligent-ShaderTools PROPERTIES
     FOLDER DiligentCore/Graphics

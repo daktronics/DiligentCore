@@ -1,27 +1,27 @@
 /*
  *  Copyright 2019-2021 Diligent Graphics LLC
  *  Copyright 2015-2019 Egor Yusov
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  In no event and under no legal theory, whether in tort (including negligence), 
- *  contract, or otherwise, unless required by applicable law (such as deliberate 
+ *  In no event and under no legal theory, whether in tort (including negligence),
+ *  contract, or otherwise, unless required by applicable law (such as deliberate
  *  and grossly negligent acts) or agreed to in writing, shall any Contributor be
- *  liable for any damages, including any direct, indirect, special, incidental, 
- *  or consequential damages of any character arising as a result of this License or 
- *  out of the use or inability to use the software (including but not limited to damages 
- *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and 
- *  all other commercial damages or losses), even if such Contributor has been advised 
+ *  liable for any damages, including any direct, indirect, special, incidental,
+ *  or consequential damages of any character arising as a result of this License or
+ *  out of the use or inability to use the software (including but not limited to damages
+ *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and
+ *  all other commercial damages or losses), even if such Contributor has been advised
  *  of the possibility of such damages.
  */
 
@@ -29,8 +29,8 @@
 #include "SwapChainVkImpl.hpp"
 #include "RenderDeviceVkImpl.hpp"
 #include "DeviceContextVkImpl.hpp"
-#include "VulkanTypeConversions.hpp"
 #include "TextureVkImpl.hpp"
+#include "VulkanTypeConversions.hpp"
 #include "EngineMemory.h"
 
 namespace Diligent
@@ -72,8 +72,7 @@ void SwapChainVkImpl::CreateSurface()
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
     if (m_Window.hWnd != NULL)
     {
-        VkWin32SurfaceCreateInfoKHR surfaceCreateInfo = {};
-
+        VkWin32SurfaceCreateInfoKHR surfaceCreateInfo{};
         surfaceCreateInfo.sType     = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
         surfaceCreateInfo.hinstance = GetModuleHandle(NULL);
         surfaceCreateInfo.hwnd      = (HWND)m_Window.hWnd;
@@ -83,8 +82,7 @@ void SwapChainVkImpl::CreateSurface()
 #elif defined(VK_USE_PLATFORM_ANDROID_KHR)
     if (m_Window.pAWindow != nullptr)
     {
-        VkAndroidSurfaceCreateInfoKHR surfaceCreateInfo = {};
-
+        VkAndroidSurfaceCreateInfoKHR surfaceCreateInfo{};
         surfaceCreateInfo.sType  = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR;
         surfaceCreateInfo.window = (ANativeWindow*)m_Window.pAWindow;
 
@@ -93,8 +91,7 @@ void SwapChainVkImpl::CreateSurface()
 #elif defined(VK_USE_PLATFORM_IOS_MVK)
     if (m_Window.pCALayer != nullptr)
     {
-        VkIOSSurfaceCreateInfoMVK surfaceCreateInfo = {};
-
+        VkIOSSurfaceCreateInfoMVK surfaceCreateInfo{};
         surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_IOS_SURFACE_CREATE_INFO_MVK;
         surfaceCreateInfo.pView = m_Window.pCALayer;
 
@@ -103,8 +100,7 @@ void SwapChainVkImpl::CreateSurface()
 #elif defined(VK_USE_PLATFORM_MACOS_MVK)
     if (m_Window.pNSView != nullptr)
     {
-        VkMacOSSurfaceCreateInfoMVK surfaceCreateInfo = {};
-
+        VkMacOSSurfaceCreateInfoMVK surfaceCreateInfo{};
         surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
         surfaceCreateInfo.pView = m_Window.pNSView;
 
@@ -113,8 +109,7 @@ void SwapChainVkImpl::CreateSurface()
 #elif defined(VK_USE_PLATFORM_WAYLAND_KHR)
     if (m_Window.pDisplay != nullptr)
     {
-        VkWaylandSurfaceCreateInfoKHR surfaceCreateInfo = {};
-
+        VkWaylandSurfaceCreateInfoKHR surfaceCreateInfo{};
         surfaceCreateInfo.sType   = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR;
         surfaceCreateInfo.display = reinterpret_cast<struct wl_display*>(m_Window.pDisplay);
         surfaceCreateInfo.Surface = reinterpret_cast<struct wl_surface*>(nullptr);
@@ -126,8 +121,7 @@ void SwapChainVkImpl::CreateSurface()
 #    if defined(VK_USE_PLATFORM_XCB_KHR)
     if (m_Window.pXCBConnection != nullptr && m_Window.WindowId != 0)
     {
-        VkXcbSurfaceCreateInfoKHR surfaceCreateInfo = {};
-
+        VkXcbSurfaceCreateInfoKHR surfaceCreateInfo{};
         surfaceCreateInfo.sType      = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
         surfaceCreateInfo.connection = reinterpret_cast<xcb_connection_t*>(m_Window.pXCBConnection);
         surfaceCreateInfo.window     = m_Window.WindowId;
@@ -139,8 +133,7 @@ void SwapChainVkImpl::CreateSurface()
 #    if defined(VK_USE_PLATFORM_XLIB_KHR)
     if ((m_Window.pDisplay != nullptr && m_Window.WindowId != 0) && m_VkSurface == VK_NULL_HANDLE)
     {
-        VkXlibSurfaceCreateInfoKHR surfaceCreateInfo = {};
-
+        VkXlibSurfaceCreateInfoKHR surfaceCreateInfo{};
         surfaceCreateInfo.sType  = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
         surfaceCreateInfo.dpy    = reinterpret_cast<Display*>(m_Window.pDisplay);
         surfaceCreateInfo.window = m_Window.WindowId;
@@ -153,15 +146,22 @@ void SwapChainVkImpl::CreateSurface()
 
     CHECK_VK_ERROR_AND_THROW(err, "Failed to create OS-specific surface");
 
-    auto*       pRenderDeviceVk  = m_pRenderDevice.RawPtr<RenderDeviceVkImpl>();
-    const auto& PhysicalDevice   = pRenderDeviceVk->GetPhysicalDevice();
-    auto&       CmdQueueVK       = pRenderDeviceVk->GetCommandQueue(0);
-    auto        QueueFamilyIndex = CmdQueueVK.GetQueueFamilyIndex();
-    if (!PhysicalDevice.CheckPresentSupport(QueueFamilyIndex, m_VkSurface))
+    if (auto pContext = m_wpDeviceContext.Lock())
     {
-        LOG_ERROR_AND_THROW("Selected physical device does not support present capability.\n"
-                            "There could be few ways to mitigate this problem. One is to try to find another queue that supports present, but does not support graphics and compute capabilities."
-                            "Another way is to find another physical device that exposes queue family that supports present and graphics capability. Neither apporach is currently implemented in Diligent Engine.");
+        auto*       pRenderDeviceVk  = m_pRenderDevice.RawPtr<RenderDeviceVkImpl>();
+        const auto& PhysicalDevice   = pRenderDeviceVk->GetPhysicalDevice();
+        auto&       CmdQueueVK       = pRenderDeviceVk->GetCommandQueue(pContext.RawPtr<DeviceContextVkImpl>()->GetCommandQueueId());
+        auto        QueueFamilyIndex = HardwareQueueIndex{CmdQueueVK.GetQueueFamilyIndex()};
+        if (!PhysicalDevice.CheckPresentSupport(QueueFamilyIndex, m_VkSurface))
+        {
+            LOG_ERROR_AND_THROW("Selected physical device does not support present capability.\n"
+                                "There could be few ways to mitigate this problem. One is to try to find another queue that supports present, but does not support graphics and compute capabilities."
+                                "Another way is to find another physical device that exposes queue family that supports present and graphics capability. Neither approach is currently implemented in Diligent Engine.");
+        }
+    }
+    else
+    {
+        DEV_ERROR("Immediate context has been released");
     }
 }
 
@@ -668,7 +668,7 @@ VkResult SwapChainVkImpl::AcquireNextImage(DeviceContextVkImpl* pDeviceCtxVk)
             ITextureView* pRTV = GetCurrentBackBufferRTV();
             ITextureView* pDSV = GetDepthBufferDSV();
             pDeviceCtxVk->SetRenderTargets(1, &pRTV, pDSV, RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
-            pDeviceCtxVk->ClearRenderTarget(GetCurrentBackBufferRTV(), nullptr, RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+            pDeviceCtxVk->ClearRenderTarget(GetCurrentBackBufferRTV(), nullptr, RESOURCE_STATE_TRANSITION_MODE_VERIFY);
             m_SwapChainImagesInitialized[m_BackBufferIndex] = true;
         }
         pDeviceCtxVk->SetRenderTargets(0, nullptr, nullptr, RESOURCE_STATE_TRANSITION_MODE_NONE);
@@ -693,7 +693,7 @@ void SwapChainVkImpl::Present(Uint32 SyncInterval)
     auto* pDeviceVk       = m_pRenderDevice.RawPtr<RenderDeviceVkImpl>();
 
     auto* pBackBuffer = GetCurrentBackBufferRTV()->GetTexture();
-    pImmediateCtxVk->UnbindTextureFromFramebuffer(ValidatedCast<TextureVkImpl>(pBackBuffer), false);
+    pImmediateCtxVk->UnbindTextureFromFramebuffer(ClassPtrCast<TextureVkImpl>(pBackBuffer), false);
 
     if (!m_IsMinimized)
     {
@@ -722,7 +722,7 @@ void SwapChainVkImpl::Present(Uint32 SyncInterval)
         VkResult Result             = VK_SUCCESS;
         PresentInfo.pResults        = &Result;
         pDeviceVk->LockCmdQueueAndRun(
-            0,
+            pImmediateCtxVk->GetCommandQueueId(),
             [&PresentInfo](ICommandQueueVk* pCmdQueueVk) //
             {
                 pCmdQueueVk->Present(PresentInfo);
@@ -794,7 +794,7 @@ void SwapChainVkImpl::ReleaseSwapChainResources(DeviceContextVkImpl* pImmediateC
         bool RenderTargetsReset = false;
         for (Uint32 i = 0; i < m_pBackBufferRTV.size() && !RenderTargetsReset; ++i)
         {
-            auto* pCurrentBackBuffer = ValidatedCast<TextureVkImpl>(m_pBackBufferRTV[i]->GetTexture());
+            auto* pCurrentBackBuffer = ClassPtrCast<TextureVkImpl>(m_pBackBufferRTV[i]->GetTexture());
             RenderTargetsReset       = pImmediateCtxVk->UnbindTextureFromFramebuffer(pCurrentBackBuffer, false);
         }
         if (RenderTargetsReset)
@@ -821,7 +821,7 @@ void SwapChainVkImpl::ReleaseSwapChainResources(DeviceContextVkImpl* pImmediateC
     m_ImageAcquiredFenceSubmitted.clear();
     m_pDepthBufferDSV.Release();
 
-    // We must wait unitl GPU is idled before destroying the fences as they
+    // We must wait until GPU is idled before destroying the fences as they
     // are destroyed immediately. The semaphores are managed and will be kept alive
     // by the device context they are submitted to.
     m_ImageAcquiredSemaphores.clear();

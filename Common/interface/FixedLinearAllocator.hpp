@@ -1,27 +1,27 @@
 /*
  *  Copyright 2019-2021 Diligent Graphics LLC
  *  Copyright 2015-2019 Egor Yusov
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  In no event and under no legal theory, whether in tort (including negligence), 
- *  contract, or otherwise, unless required by applicable law (such as deliberate 
+ *  In no event and under no legal theory, whether in tort (including negligence),
+ *  contract, or otherwise, unless required by applicable law (such as deliberate
  *  and grossly negligent acts) or agreed to in writing, shall any Contributor be
- *  liable for any damages, including any direct, indirect, special, incidental, 
- *  or consequential damages of any character arising as a result of this License or 
- *  out of the use or inability to use the software (including but not limited to damages 
- *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and 
- *  all other commercial damages or losses), even if such Contributor has been advised 
+ *  liable for any damages, including any direct, indirect, special, incidental,
+ *  or consequential damages of any character arising as a result of this License or
+ *  out of the use or inability to use the software (including but not limited to damages
+ *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and
+ *  all other commercial damages or losses), even if such Contributor has been advised
  *  of the possibility of such damages.
  */
 
@@ -62,6 +62,10 @@ public:
         m_ReservedSize {Other.m_ReservedSize },
         m_CurrAlignment{Other.m_CurrAlignment},
         m_pAllocator   {Other.m_pAllocator   }
+#if DILIGENT_DEBUG
+        , m_DbgCurrAllocation{Other.m_DbgCurrAllocation}
+        , m_DbgAllocations{std::move(Other.m_DbgAllocations)}
+#endif
     // clang-format on
     {
         Other.Reset();
@@ -120,7 +124,7 @@ public:
         }
         m_CurrAlignment = alignment;
 
-        size = Align(size, alignment);
+        size = AlignUp(size, alignment);
         m_ReservedSize += size;
 
 #if DILIGENT_DEBUG
@@ -136,19 +140,20 @@ public:
 
     void AddSpaceForString(const Char* str) noexcept
     {
-        VERIFY_EXPR(str != nullptr);
-        AddSpace(strlen(str) + 1, 1);
+        if (str != nullptr)
+            AddSpace<Char>(strlen(str) + 1);
     }
 
     void AddSpaceForString(const String& str) noexcept
     {
-        AddSpaceForString(str.c_str());
+        if (!str.empty())
+            AddSpace<String::value_type>(str.length() + 1);
     }
 
     void Reserve(size_t size)
     {
         VERIFY(m_pDataStart == nullptr, "Memory has already been allocated");
-        VERIFY(m_ReservedSize == 0, "Space has been added to the allocator and will be overriden");
+        VERIFY(m_ReservedSize == 0, "Space has been added to the allocator and will be overridden");
         m_ReservedSize = size;
         Reserve();
     }
@@ -158,11 +163,11 @@ public:
         VERIFY(m_pDataStart == nullptr, "Memory has already been allocated");
         VERIFY(m_pAllocator != nullptr, "Allocator must not be null");
         // Make sure the data size is at least sizeof(void*)-aligned
-        m_ReservedSize = Align(m_ReservedSize, sizeof(void*));
+        m_ReservedSize = AlignUp(m_ReservedSize, sizeof(void*));
         if (m_ReservedSize > 0)
         {
             m_pDataStart = reinterpret_cast<uint8_t*>(m_pAllocator->Allocate(m_ReservedSize, "Raw memory for linear allocator", __FILE__, __LINE__));
-            VERIFY(m_pDataStart == Align(m_pDataStart, sizeof(void*)), "Memory pointer must be at least sizeof(void*)-aligned");
+            VERIFY(m_pDataStart == AlignUp(m_pDataStart, sizeof(void*)), "Memory pointer must be at least sizeof(void*)-aligned");
 
             m_pCurrPtr = m_pDataStart;
         }
@@ -177,7 +182,7 @@ public:
         if (size == 0)
             return nullptr;
 
-        size = Align(size, alignment);
+        size = AlignUp(size, alignment);
 
 #if DILIGENT_DEBUG
         VERIFY(m_DbgCurrAllocation < m_DbgAllocations.size(), "Allocation number exceed the number of allocations that were originally reserved.");
@@ -186,8 +191,8 @@ public:
         VERIFY(CurrAllocation.alignment == alignment, "Allocation alignment (", alignment, ") does not match the initially requested alignment (", CurrAllocation.alignment, ")");
 #endif
 
-        VERIFY(Align(m_pCurrPtr, m_CurrAlignment) == m_pCurrPtr, "Current pointer is not aligned as expected");
-        m_pCurrPtr      = Align(m_pCurrPtr, alignment);
+        VERIFY(AlignUp(m_pCurrPtr, m_CurrAlignment) == m_pCurrPtr, "Current pointer is not aligned as expected");
+        m_pCurrPtr      = AlignUp(m_pCurrPtr, alignment);
         m_CurrAlignment = alignment;
 
         VERIFY(m_pCurrPtr + size <= m_pDataStart + CurrAllocation.reserved_size,

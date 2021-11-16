@@ -2,28 +2,32 @@ cmake_minimum_required (VERSION 3.10)
 
 project(Diligent-GraphicsEngineD3D11 CXX)
 
-
 set(INCLUDE 
     include/BufferD3D11Impl.hpp
     include/BufferViewD3D11Impl.hpp
     include/CommandListD3D11Impl.hpp
+    include/D3D11TileMappingHelper.hpp
     include/D3D11TypeConversions.hpp
     include/D3D11TypeDefinitions.h
     include/DeviceContextD3D11Impl.hpp
+    include/DeviceMemoryD3D11Impl.hpp
     include/DisjointQueryPool.hpp
-    include/EngineD3D11Defines.h
+    include/EngineD3D11ImplTraits.hpp
     include/pch.h
-	include/FenceD3D11Impl.hpp
+    include/FenceD3D11Impl.hpp
     include/FramebufferD3D11Impl.hpp
     include/PipelineStateD3D11Impl.hpp
+    include/PipelineResourceAttribsD3D11.hpp
+    include/PipelineResourceSignatureD3D11Impl.hpp
     include/QueryD3D11Impl.hpp
     include/RenderDeviceD3D11Impl.hpp
+    include/ResourceD3D11Base.hpp
     include/RenderPassD3D11Impl.hpp
     include/SamplerD3D11Impl.hpp
     include/ShaderD3D11Impl.hpp
     include/ShaderResourceBindingD3D11Impl.hpp
     include/ShaderResourceCacheD3D11.hpp
-    include/ShaderResourceLayoutD3D11.hpp
+    include/ShaderVariableManagerD3D11.hpp
     include/ShaderResourcesD3D11.hpp
     include/SwapChainD3D11Impl.hpp
     include/targetver.h
@@ -38,6 +42,7 @@ set(INTERFACE
     interface/BufferD3D11.h
     interface/BufferViewD3D11.h
     interface/DeviceContextD3D11.h
+    interface/DeviceMemoryD3D11.h
     interface/EngineFactoryD3D11.h
     interface/FenceD3D11.h
     interface/PipelineStateD3D11.h
@@ -58,11 +63,13 @@ set(SRC
     src/CommandListD3D11Impl.cpp
     src/D3D11TypeConversions.cpp
     src/DeviceContextD3D11Impl.cpp
+    src/DeviceMemoryD3D11Impl.cpp
     src/EngineFactoryD3D11.cpp
     src/FenceD3D11Impl.cpp
     src/FramebufferD3D11Impl.cpp
     src/GUIDDef.cpp
     src/PipelineStateD3D11Impl.cpp
+    src/PipelineResourceSignatureD3D11Impl.cpp
     src/QueryD3D11Impl.cpp
     src/RenderDeviceD3D11Impl.cpp
     src/RenderPassD3D11Impl.cpp
@@ -70,7 +77,7 @@ set(SRC
     src/ShaderD3D11Impl.cpp
     src/ShaderResourceBindingD3D11Impl.cpp
     src/ShaderResourceCacheD3D11.cpp
-    src/ShaderResourceLayoutD3D11.cpp
+    src/ShaderVariableManagerD3D11.cpp
     src/ShaderResourcesD3D11.cpp
     src/SwapChainD3D11Impl.cpp
     src/Texture1D_D3D11.cpp
@@ -87,10 +94,7 @@ INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface>
     $<INSTALL_INTERFACE:include/${TARGET_RELATIVE_PATH}/interface>
 )
-target_link_libraries(Diligent-GraphicsEngineD3D11Interface 
-INTERFACE 
-    Diligent-GraphicsEngineD3DBaseInterface
-)
+target_link_libraries     (Diligent-GraphicsEngineD3D11Interface INTERFACE Diligent-GraphicsEngineD3DBaseInterface)
 
 
 add_library(Diligent-GraphicsEngineD3D11-static STATIC 

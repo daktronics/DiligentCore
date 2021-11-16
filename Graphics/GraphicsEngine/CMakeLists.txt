@@ -9,12 +9,15 @@ set(INCLUDE
     include/DefaultShaderSourceStreamFactory.h
     include/Defines.h
     include/DeviceContextBase.hpp
+    include/DeviceMemoryBase.hpp
     include/DeviceObjectBase.hpp
     include/EngineFactoryBase.hpp
     include/EngineMemory.h
     include/FenceBase.hpp
     include/FramebufferBase.hpp
+    include/IndexWrapper.hpp
     include/PipelineStateBase.hpp
+    include/PrivateConstants.h
     include/QueryBase.hpp
     include/RenderDeviceBase.hpp
     include/RenderPassBase.hpp
@@ -22,6 +25,7 @@ set(INCLUDE
     include/SamplerBase.hpp
     include/ShaderBase.hpp
     include/ShaderResourceBindingBase.hpp
+    include/ShaderResourceCacheCommon.hpp
     include/ShaderResourceVariableBase.hpp
     include/StateObjectsRegistry.hpp
     include/SwapChainBase.hpp
@@ -30,6 +34,7 @@ set(INCLUDE
     include/BottomLevelASBase.hpp
     include/TopLevelASBase.hpp
     include/ShaderBindingTableBase.hpp
+    include/PipelineResourceSignatureBase.hpp
 )
 
 set(INTERFACE 
@@ -39,8 +44,10 @@ set(INTERFACE
     interface/BufferView.h
     interface/CommandList.h
     interface/Constants.h
+    interface/CommandQueue.h
     interface/DepthStencilState.h
     interface/DeviceContext.h
+    interface/DeviceMemory.h
     interface/DeviceObject.h
     interface/EngineFactory.h
     interface/Fence.h
@@ -48,6 +55,7 @@ set(INTERFACE
     interface/GraphicsTypes.h
     interface/InputLayout.h
     interface/PipelineState.h
+    interface/PipelineResourceSignature.h
     interface/Query.h
     interface/RasterizerState.h
     interface/RenderDevice.h
@@ -65,17 +73,26 @@ set(INTERFACE
     interface/ShaderBindingTable.h
 )
 
+if(PLATFORM_WIN32 OR PLATFORM_UNIVERSAL_WINDOWS)
+    list(APPEND INTERFACE interface/LoadEngineDll.h)
+endif()
+
 set(SOURCE
     src/APIInfo.cpp
     src/BottomLevelASBase.cpp
     src/BufferBase.cpp
     src/DefaultShaderSourceStreamFactory.cpp
     src/DeviceContextBase.cpp
+    src/DeviceMemoryBase.cpp
     src/EngineMemory.cpp
+    src/EngineFactoryBase.cpp
     src/FramebufferBase.cpp
+    src/PipelineResourceSignatureBase.cpp
     src/PipelineStateBase.cpp
+    src/RenderDeviceBase.cpp
     src/ResourceMappingBase.cpp
     src/ShaderBindingTableBase.cpp
+    src/SamplerBase.cpp
     src/RenderPassBase.cpp
     src/TextureBase.cpp
     src/TopLevelASBase.cpp

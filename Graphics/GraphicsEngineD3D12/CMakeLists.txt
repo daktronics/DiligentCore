@@ -1,14 +1,15 @@
-cmake_minimum_required (VERSION 3.10)
+cmake_minimum_required (VERSION 3.11)
 
 project(Diligent-GraphicsEngineD3D12 CXX)
 
-set(INCLUDE 
+set(INCLUDE
     include/BufferD3D12Impl.hpp
     include/BufferViewD3D12Impl.hpp
     include/CommandContext.hpp
     include/CommandListD3D12Impl.hpp
     include/CommandListManager.hpp
     include/CommandQueueD3D12Impl.hpp
+    include/D3D12TileMappingHelper.hpp
     include/D3D12ResourceBase.hpp
     include/D3D12TypeConversions.hpp
     include/D3D12TypeDefinitions.h
@@ -16,6 +17,8 @@ set(INCLUDE
     include/d3dx12_win.h
     include/DescriptorHeap.hpp
     include/DeviceContextD3D12Impl.hpp
+    include/DeviceMemoryD3D12Impl.hpp
+    include/EngineD3D12ImplTraits.hpp
     include/D3D12DynamicHeap.hpp
     include/FenceD3D12Impl.hpp
     include/FramebufferD3D12Impl.hpp
@@ -26,27 +29,30 @@ set(INCLUDE
     include/QueryManagerD3D12.hpp
     include/RenderDeviceD3D12Impl.hpp
     include/RenderPassD3D12Impl.hpp
+    include/RootParamsManager.hpp
     include/RootSignature.hpp
     include/SamplerD3D12Impl.hpp
     include/ShaderD3D12Impl.hpp
     include/ShaderResourceBindingD3D12Impl.hpp
     include/ShaderResourceCacheD3D12.hpp
-    include/ShaderResourceLayoutD3D12.hpp
     include/ShaderResourcesD3D12.hpp
-    include/ShaderVariableD3D12.hpp
+    include/ShaderVariableManagerD3D12.hpp
     include/SwapChainD3D12Impl.hpp
     include/TextureD3D12Impl.hpp
     include/TextureViewD3D12Impl.hpp
     include/BottomLevelASD3D12Impl.hpp
     include/TopLevelASD3D12Impl.hpp
     include/ShaderBindingTableD3D12Impl.hpp
+    include/PipelineResourceSignatureD3D12Impl.hpp
+    include/PipelineResourceAttribsD3D12.hpp
 )
 
-set(INTERFACE 
+set(INTERFACE
     interface/BufferD3D12.h
     interface/BufferViewD3D12.h
     interface/CommandQueueD3D12.h
     interface/DeviceContextD3D12.h
+    interface/DeviceMemoryD3D12.h
     interface/EngineFactoryD3D12.h
     interface/FenceD3D12.h
     interface/PipelineStateD3D12.h
@@ -64,7 +70,7 @@ set(INTERFACE
 )
 
 
-set(SRC 
+set(SRC
     src/BufferD3D12Impl.cpp
     src/BufferViewD3D12Impl.cpp
     src/CommandContext.cpp
@@ -74,6 +80,7 @@ set(SRC
     src/D3D12Utils.cpp
     src/DescriptorHeap.cpp
     src/DeviceContextD3D12Impl.cpp
+    src/DeviceMemoryD3D12Impl.cpp
     src/D3D12DynamicHeap.cpp
     src/EngineFactoryD3D12.cpp
     src/FenceD3D12Impl.cpp
@@ -84,20 +91,21 @@ set(SRC
     src/QueryManagerD3D12.cpp
     src/RenderDeviceD3D12Impl.cpp
     src/RenderPassD3D12Impl.cpp
+    src/RootParamsManager.cpp
     src/RootSignature.cpp
     src/SamplerD3D12Impl.cpp
     src/ShaderD3D12Impl.cpp
     src/ShaderResourceBindingD3D12Impl.cpp
     src/ShaderResourceCacheD3D12.cpp
-    src/ShaderResourceLayoutD3D12.cpp
     src/ShaderResourcesD3D12.cpp
-    src/ShaderVariableD3D12.cpp
+    src/ShaderVariableManagerD3D12.cpp
     src/SwapChainD3D12Impl.cpp
     src/TextureD3D12Impl.cpp
     src/TextureViewD3D12Impl.cpp
     src/BottomLevelASD3D12Impl.cpp
     src/TopLevelASD3D12Impl.cpp
     src/ShaderBindingTableD3D12Impl.cpp
+    src/PipelineResourceSignatureD3D12Impl.cpp
 )
 
 if(PLATFORM_WIN32)
@@ -122,7 +130,7 @@ set(SHADERS
 set(COMPILED_SHADERS_DIR ${CMAKE_CURRENT_BINARY_DIR}/CompiledShaders/GenerateMips)
 file(MAKE_DIRECTORY "${COMPILED_SHADERS_DIR}")
 
-set_source_files_properties(${SHADERS} PROPERTIES 
+set_source_files_properties(${SHADERS} PROPERTIES
     VS_SHADER_TYPE Compute
     VS_SHADER_ENTRYPOINT main
     VS_SHADER_MODEL 5.0
@@ -138,24 +146,21 @@ INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface>
     $<INSTALL_INTERFACE:include/${TARGET_RELATIVE_PATH}/interface>
 )
-target_link_libraries(Diligent-GraphicsEngineD3D12Interface 
-INTERFACE 
-    Diligent-GraphicsEngineD3DBaseInterface
-)
+target_link_libraries     (Diligent-GraphicsEngineD3D12Interface INTERFACE Diligent-GraphicsEngineD3DBaseInterface)
 
-add_library(Diligent-GraphicsEngineD3D12-static STATIC 
+add_library(Diligent-GraphicsEngineD3D12-static STATIC
     ${SRC} ${INTERFACE} ${INCLUDE} ${SHADERS}
     readme.md
     shaders/GenerateMips/GenerateMipsCS.hlsli
 )
 
-add_library(Diligent-GraphicsEngineD3D12-shared SHARED 
+add_library(Diligent-GraphicsEngineD3D12-shared SHARED
     src/DLLMain.cpp
     src/GraphicsEngineD3D12.def
     readme.md
 )
 
-target_include_directories(Diligent-GraphicsEngineD3D12-static 
+target_include_directories(Diligent-GraphicsEngineD3D12-static
 PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}/CompiledShaders
     include
@@ -163,11 +168,11 @@ PRIVATE
 
 target_link_libraries(Diligent-GraphicsEngineD3D12-static
 PRIVATE
-    Diligent-BuildSettings 
-    Diligent-Common 
+    Diligent-BuildSettings
+    Diligent-Common
     Diligent-GraphicsEngineD3DBase
     Diligent-GraphicsEngineNextGenBase
-    Diligent-TargetPlatform 
+    Diligent-TargetPlatform
     Diligent-ShaderTools
     dxgi.lib
     d3dcompiler.lib
@@ -203,17 +208,63 @@ set_common_target_properties(Diligent-GraphicsEngineD3D12-static)
 
 source_group("src" FILES ${SRC})
 
-source_group("dll" FILES 
+source_group("dll" FILES
     src/DLLMain.cpp
     src/GraphicsEngineD3D12.def
 )
 
 source_group("include" FILES ${INCLUDE})
 source_group("interface" FILES ${INTERFACE})
-source_group("shaders" FILES 
+source_group("shaders" FILES
     ${SHADERS}
     shaders/GenerateMips/GenerateMipsCS.hlsli
 )
+
+option(DILIGENT_LOAD_PIX_EVENT_RUNTIME OFF "Download WinPixEventRuntime to enable Direct3D12 debug utils")
+if(${DILIGENT_LOAD_PIX_EVENT_RUNTIME})
+    include(FetchContent)
+    set(DILIGENT_PIX_EVENT_RUNTIME_PATH "${CMAKE_BINARY_DIR}/WinPixEventRuntime")
+    FetchContent_Declare(
+        WinPixEventRuntime
+        URL                 "https://www.nuget.org/api/v2/package/WinPixEventRuntime"
+        DOWNLOAD_DIR        ${DILIGENT_PIX_EVENT_RUNTIME_PATH}
+        LOG_DOWNLOAD        1
+        SOURCE_DIR			${DILIGENT_PIX_EVENT_RUNTIME_PATH}
+        CONFIGURE_COMMAND	${CMAKE_COMMAND} -E tar -xf "${CMAKE_BINARY_DIR}/WinPixEventRuntime/winpixeventruntime.*.nupkg"
+        LOG_CONFIGURE 		1
+    )
+    FetchContent_GetProperties(WinPixEventRuntime)
+    if(NOT WinPixEventRuntime_POPULATED)
+        FetchContent_Populate(WinPixEventRuntime)
+    endif()
+    if(EXISTS "${DILIGENT_PIX_EVENT_RUNTIME_PATH}/include/WinPixEventRuntime/pix3.h")
+        if(PLATFORM_WIN32 AND ${CMAKE_SIZEOF_VOID_P} EQUAL 8)
+            set(DILIGENT_PIX_EVENT_RUNTIME_DLL_PATH ${DILIGENT_PIX_EVENT_RUNTIME_PATH}/bin/x64/WinPixEventRuntime.dll)
+            set(DILIGENT_PIX_EVENT_RUNTIME_LIB_PATH ${DILIGENT_PIX_EVENT_RUNTIME_PATH}/bin/x64/WinPixEventRuntime.lib)
+        elseif(PLATFORM_UNIVERSAL_WINDOWS AND ${CMAKE_SIZEOF_VOID_P} EQUAL 8)
+            set(DILIGENT_PIX_EVENT_RUNTIME_DLL_PATH ${DILIGENT_PIX_EVENT_RUNTIME_PATH}/bin/x64/WinPixEventRuntime_UAP.dll)
+            set(DILIGENT_PIX_EVENT_RUNTIME_LIB_PATH ${DILIGENT_PIX_EVENT_RUNTIME_PATH}/bin/x64/WinPixEventRuntime_UAP.lib)
+        else()
+            message(STATUS "WinPixEventRuntime is not supported in this configuration")
+            set(DILIGENT_PIX_EVENT_RUNTIME_PATH_VALID OFF)
+        endif()
+
+        if (EXISTS "${DILIGENT_PIX_EVENT_RUNTIME_DLL_PATH}" AND EXISTS "${DILIGENT_PIX_EVENT_RUNTIME_LIB_PATH}")
+            message(STATUS "Found WinPixEventRuntime")
+            target_compile_definitions(Diligent-GraphicsEngineD3D12-static PRIVATE DILIGENT_USE_PIX)
+            target_include_directories(Diligent-GraphicsEngineD3D12-static PRIVATE "${DILIGENT_PIX_EVENT_RUNTIME_PATH}")
+            target_link_libraries(Diligent-GraphicsEngineD3D12-static PRIVATE "${DILIGENT_PIX_EVENT_RUNTIME_LIB_PATH}")
+            set(DILIGENT_PIX_EVENT_RUNTIME_DLL_PATH ${DILIGENT_PIX_EVENT_RUNTIME_DLL_PATH} CACHE PATH "Win Pix Event Runtime DLL path")
+        else()
+            if(NOT EXISTS "${DILIGENT_PIX_EVENT_RUNTIME_DLL_PATH}")
+                message(STATUS "'${DILIGENT_PIX_EVENT_RUNTIME_DLL_PATH}' is not valid. Pix events will be disabled")
+            endif()
+            if(NOT EXISTS "${DILIGENT_PIX_EVENT_RUNTIME_LIB_PATH}")
+                message(STATUS "'${DILIGENT_PIX_EVENT_RUNTIME_LIB_PATH}' is not valid. Pix events will be disabled")
+            endif()
+        endif()
+    endif()
+endif()
 
 set_target_properties(Diligent-GraphicsEngineD3D12-static PROPERTIES
     FOLDER DiligentCore/Graphics

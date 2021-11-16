@@ -1,27 +1,27 @@
 /*
  *  Copyright 2019-2021 Diligent Graphics LLC
  *  Copyright 2015-2019 Egor Yusov
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  In no event and under no legal theory, whether in tort (including negligence), 
- *  contract, or otherwise, unless required by applicable law (such as deliberate 
+ *  In no event and under no legal theory, whether in tort (including negligence),
+ *  contract, or otherwise, unless required by applicable law (such as deliberate
  *  and grossly negligent acts) or agreed to in writing, shall any Contributor be
- *  liable for any damages, including any direct, indirect, special, incidental, 
- *  or consequential damages of any character arising as a result of this License or 
- *  out of the use or inability to use the software (including but not limited to damages 
- *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and 
- *  all other commercial damages or losses), even if such Contributor has been advised 
+ *  liable for any damages, including any direct, indirect, special, incidental,
+ *  or consequential damages of any character arising as a result of this License or
+ *  out of the use or inability to use the software (including but not limited to damages
+ *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and
+ *  all other commercial damages or losses), even if such Contributor has been advised
  *  of the possibility of such damages.
  */
 
@@ -50,6 +50,8 @@
 #include "BottomLevelAS.h"
 #include "TopLevelAS.h"
 #include "ShaderBindingTable.h"
+#include "PipelineResourceSignature.h"
+#include "DeviceMemory.h"
 
 #include "DepthStencilState.h"
 #include "RasterizerState.h"
@@ -81,7 +83,7 @@ DILIGENT_BEGIN_INTERFACE(IRenderDevice, IObject)
     ///                          Immutable buffers (USAGE_IMMUTABLE) must be initialized at creation time.
     /// \param [out] ppBuffer  - Address of the memory location where the pointer to the
     ///                          buffer interface will be stored. The function calls AddRef(),
-    ///                          so that the new buffer will contain one reference and must be
+    ///                          so that the new buffer will have one reference and must be
     ///                          released by a call to Release().
     ///
     /// \remarks
@@ -98,7 +100,7 @@ DILIGENT_BEGIN_INTERFACE(IRenderDevice, IObject)
     /// \param [in] ShaderCI  - Shader create info, see Diligent::ShaderCreateInfo for details.
     /// \param [out] ppShader - Address of the memory location where the pointer to the
     ///                         shader interface will be stored.
-    ///                         The function calls AddRef(), so that the new object will contain
+    ///                         The function calls AddRef(), so that the new object will have
     ///                         one reference.
     VIRTUAL void METHOD(CreateShader)(THIS_
                                       const ShaderCreateInfo REF ShaderCI,
@@ -113,11 +115,11 @@ DILIGENT_BEGIN_INTERFACE(IRenderDevice, IObject)
     ///
     /// \param [out] ppTexture - Address of the memory location where the pointer to the
     ///                          texture interface will be stored.
-    ///                          The function calls AddRef(), so that the new object will contain
+    ///                          The function calls AddRef(), so that the new object will have
     ///                          one reference.
     /// \remarks
     /// To create all mip levels, set the TexDesc.MipLevels to zero.\n
-    /// Multisampled resources cannot be initialzed with data when they are created. \n
+    /// Multisampled resources cannot be initialized with data when they are created. \n
     /// If initial data is provided, number of subresources must exactly match the number
     /// of subresources in the texture (which is the number of mip levels times the number of array slices.
     /// For a 3D texture, this is just the number of mip levels).
@@ -136,7 +138,7 @@ DILIGENT_BEGIN_INTERFACE(IRenderDevice, IObject)
     /// \param [in]  SamDesc   - Sampler description, see Diligent::SamplerDesc for details.
     /// \param [out] ppSampler - Address of the memory location where the pointer to the
     ///                          sampler interface will be stored.
-    ///                          The function calls AddRef(), so that the new object will contain
+    ///                          The function calls AddRef(), so that the new object will have
     ///                          one reference.
     /// \remark If an application attempts to create a sampler interface with the same attributes
     ///         as an existing interface, the same interface will be returned.
@@ -150,7 +152,7 @@ DILIGENT_BEGIN_INTERFACE(IRenderDevice, IObject)
     /// \param [in]  MappingDesc - Resource mapping description, see Diligent::ResourceMappingDesc for details.
     /// \param [out] ppMapping   - Address of the memory location where the pointer to the
     ///                            resource mapping interface will be stored.
-    ///                            The function calls AddRef(), so that the new object will contain
+    ///                            The function calls AddRef(), so that the new object will have
     ///                            one reference.
     VIRTUAL void METHOD(CreateResourceMapping)(THIS_
                                                const ResourceMappingDesc REF MappingDesc,
@@ -161,40 +163,51 @@ DILIGENT_BEGIN_INTERFACE(IRenderDevice, IObject)
     /// \param [in]  PSOCreateInfo   - Graphics pipeline state create info, see Diligent::GraphicsPipelineStateCreateInfo for details.
     /// \param [out] ppPipelineState - Address of the memory location where the pointer to the
     ///                                pipeline state interface will be stored.
-    ///                                The function calls AddRef(), so that the new object will contain
+    ///                                The function calls AddRef(), so that the new object will have
     ///                                one reference.
     VIRTUAL void METHOD(CreateGraphicsPipelineState)(THIS_
                                                      const GraphicsPipelineStateCreateInfo REF PSOCreateInfo,
                                                      IPipelineState**                          ppPipelineState) PURE;
-    
+
     /// Creates a new compute pipeline state object
 
     /// \param [in]  PSOCreateInfo   - Compute pipeline state create info, see Diligent::ComputePipelineStateCreateInfo for details.
     /// \param [out] ppPipelineState - Address of the memory location where the pointer to the
     ///                                pipeline state interface will be stored.
-    ///                                The function calls AddRef(), so that the new object will contain
+    ///                                The function calls AddRef(), so that the new object will have
     ///                                one reference.
     VIRTUAL void METHOD(CreateComputePipelineState)(THIS_
                                                     const ComputePipelineStateCreateInfo REF PSOCreateInfo,
                                                     IPipelineState**                         ppPipelineState) PURE;
-    
+
     /// Creates a new ray tracing pipeline state object
 
     /// \param [in]  PSOCreateInfo   - Ray tracing pipeline state create info, see Diligent::RayTracingPipelineStateCreateInfo for details.
     /// \param [out] ppPipelineState - Address of the memory location where the pointer to the
     ///                                pipeline state interface will be stored.
-    ///                                The function calls AddRef(), so that the new object will contain
+    ///                                The function calls AddRef(), so that the new object will have
     ///                                one reference.
     VIRTUAL void METHOD(CreateRayTracingPipelineState)(THIS_
                                                        const RayTracingPipelineStateCreateInfo REF PSOCreateInfo,
                                                        IPipelineState**                            ppPipelineState) PURE;
+
+    /// Creates a new tile pipeline state object
+
+    /// \param [in]  PSOCreateInfo   - Tile pipeline state create info, see Diligent::TilePipelineStateCreateInfo for details.
+    /// \param [out] ppPipelineState - Address of the memory location where the pointer to the
+    ///                                pipeline state interface will be stored.
+    ///                                The function calls AddRef(), so that the new object will have
+    ///                                one reference.
+    VIRTUAL void METHOD(CreateTilePipelineState)(THIS_
+                                                 const TilePipelineStateCreateInfo REF PSOCreateInfo,
+                                                 IPipelineState**                      ppPipelineState) PURE;
 
     /// Creates a new fence object
 
     /// \param [in]  Desc    - Fence description, see Diligent::FenceDesc for details.
     /// \param [out] ppFence - Address of the memory location where the pointer to the
     ///                        fence interface will be stored.
-    ///                        The function calls AddRef(), so that the new object will contain
+    ///                        The function calls AddRef(), so that the new object will have
     ///                        one reference.
     VIRTUAL void METHOD(CreateFence)(THIS_
                                      const FenceDesc REF Desc,
@@ -206,7 +219,7 @@ DILIGENT_BEGIN_INTERFACE(IRenderDevice, IObject)
     /// \param [in]  Desc    - Query description, see Diligent::QueryDesc for details.
     /// \param [out] ppQuery - Address of the memory location where the pointer to the
     ///                        query interface will be stored.
-    ///                        The function calls AddRef(), so that the new object will contain
+    ///                        The function calls AddRef(), so that the new object will have
     ///                        one reference.
     VIRTUAL void METHOD(CreateQuery)(THIS_
                                      const QueryDesc REF Desc,
@@ -218,7 +231,7 @@ DILIGENT_BEGIN_INTERFACE(IRenderDevice, IObject)
     /// \param [in]  Desc         - Render pass description, see Diligent::RenderPassDesc for details.
     /// \param [out] ppRenderPass - Address of the memory location where the pointer to the
     ///                             render pass interface will be stored.
-    ///                             The function calls AddRef(), so that the new object will contain
+    ///                             The function calls AddRef(), so that the new object will have
     ///                             one reference.
     VIRTUAL void METHOD(CreateRenderPass)(THIS_
                                           const RenderPassDesc REF Desc,
@@ -231,7 +244,7 @@ DILIGENT_BEGIN_INTERFACE(IRenderDevice, IObject)
     /// \param [in]  Desc          - Framebuffer description, see Diligent::FramebufferDesc for details.
     /// \param [out] ppFramebuffer - Address of the memory location where the pointer to the
     ///                              framebuffer interface will be stored.
-    ///                              The function calls AddRef(), so that the new object will contain
+    ///                              The function calls AddRef(), so that the new object will have
     ///                              one reference.
     VIRTUAL void METHOD(CreateFramebuffer)(THIS_
                                            const FramebufferDesc REF Desc,
@@ -243,43 +256,65 @@ DILIGENT_BEGIN_INTERFACE(IRenderDevice, IObject)
     /// \param [in]  Desc    - BLAS description, see Diligent::BottomLevelASDesc for details.
     /// \param [out] ppBLAS  - Address of the memory location where the pointer to the
     ///                        BLAS interface will be stored.
-    ///                        The function calls AddRef(), so that the new object will contain
+    ///                        The function calls AddRef(), so that the new object will have
     ///                        one reference.
     VIRTUAL void METHOD(CreateBLAS)(THIS_
                                     const BottomLevelASDesc REF Desc,
                                     IBottomLevelAS**            ppBLAS) PURE;
-    
+
 
     /// Creates a top-level acceleration structure object (TLAS).
 
     /// \param [in]  Desc    - TLAS description, see Diligent::TopLevelASDesc for details.
     /// \param [out] ppTLAS  - Address of the memory location where the pointer to the
     ///                        TLAS interface will be stored.
-    ///                        The function calls AddRef(), so that the new object will contain
+    ///                        The function calls AddRef(), so that the new object will have
     ///                        one reference.
     VIRTUAL void METHOD(CreateTLAS)(THIS_
                                     const TopLevelASDesc REF Desc,
                                     ITopLevelAS**            ppTLAS) PURE;
-    
-    
+
+
     /// Creates a shader resource binding table object (SBT).
 
     /// \param [in]  Desc    - SBT description, see Diligent::ShaderBindingTableDesc for details.
     /// \param [out] ppSBT   - Address of the memory location where the pointer to the
     ///                        SBT interface will be stored.
-    ///                        The function calls AddRef(), so that the new object will contain
+    ///                        The function calls AddRef(), so that the new object will have
     ///                        one reference.
     VIRTUAL void METHOD(CreateSBT)(THIS_
                                    const ShaderBindingTableDesc REF Desc,
                                    IShaderBindingTable**            ppSBT) PURE;
 
+    /// Creates a pipeline resource signature object.
 
-    /// Gets the device capabilities, see Diligent::DeviceCaps for details
-    VIRTUAL const DeviceCaps REF METHOD(GetDeviceCaps)(THIS) CONST PURE;
-    
-    /// Gets the device properties, see Diligent::DeviceProperties for details
-    VIRTUAL const DeviceProperties REF METHOD(GetDeviceProperties)(THIS) CONST PURE;
+    /// \param [in]  Desc         - Resource signature description, see Diligent::PipelineResourceSignatureDesc for details.
+    /// \param [out] ppSignature  - Address of the memory location where the pointer to the
+    ///                             pipeline resource signature interface will be stored.
+    ///                             The function calls AddRef(), so that the new object will have
+    ///                             one reference.
+    VIRTUAL void METHOD(CreatePipelineResourceSignature)(THIS_
+                                                         const PipelineResourceSignatureDesc REF Desc,
+                                                         IPipelineResourceSignature**            ppSignature) PURE;
 
+
+    /// Creates a device memory object.
+
+    /// \param [in]  CreateInfo - Device memory create info, see Diligent::DeviceMemoryCreateInfo for details.
+    /// \param [out] ppMemory   - Address of the memory location where the pointer to the
+    ///                           device memory interface will be stored.
+    ///                           The function calls AddRef(), so that the new object will have
+    ///                           one reference.
+    VIRTUAL void METHOD(CreateDeviceMemory)(THIS_
+                                            const DeviceMemoryCreateInfo REF CreateInfo,
+                                            IDeviceMemory**                  ppMemory) PURE;
+
+
+    /// Returns the device information, see Diligent::RenderDeviceInfo for details.
+    VIRTUAL const RenderDeviceInfo REF METHOD(GetDeviceInfo)(THIS) CONST PURE;
+
+    /// Returns the graphics adapter information, see Diligent::GraphicsAdapterInfo for details.
+    VIRTUAL const GraphicsAdapterInfo REF METHOD(GetAdapterInfo)(THIS) CONST PURE;
 
     /// Returns the basic texture format information.
 
@@ -287,6 +322,8 @@ DILIGENT_BEGIN_INTERFACE(IRenderDevice, IObject)
     /// \param [in] TexFormat - Texture format for which to provide the information
     /// \return Const reference to the TextureFormatInfo structure containing the
     ///         texture format description.
+    ///
+    /// \remarks This method must be externally synchronized.
     VIRTUAL const TextureFormatInfo REF METHOD(GetTextureFormatInfo)(THIS_
                                                                      TEXTURE_FORMAT TexFormat) PURE;
 
@@ -300,8 +337,17 @@ DILIGENT_BEGIN_INTERFACE(IRenderDevice, IObject)
     /// \remark The first time this method is called for a particular format, it may be
     ///         considerably slower than GetTextureFormatInfo(). If you do not require
     ///         extended information, call GetTextureFormatInfo() instead.
+    ///
+    /// \remarks This method must be externally synchronized.
     VIRTUAL const TextureFormatInfoExt REF METHOD(GetTextureFormatInfoExt)(THIS_
                                                                            TEXTURE_FORMAT TexFormat) PURE;
+
+
+    /// Returns the sparse texture format info for the given texture format, resource dimension and sample count.
+    VIRTUAL SparseTextureFormatInfo METHOD(GetSparseTextureFormatInfo)(THIS_
+                                                                       TEXTURE_FORMAT     TexFormat,
+                                                                       RESOURCE_DIMENSION Dimension,
+                                                                       Uint32             SampleCount) CONST PURE;
 
     /// Purges device release queues and releases all stale resources.
     /// This method is automatically called by ISwapChain::Present() of the primary swap chain.
@@ -335,24 +381,31 @@ DILIGENT_END_INTERFACE
 #if DILIGENT_C_INTERFACE
 
 // clang-format off
-#    define IRenderDevice_CreateBuffer(This, ...)                  CALL_IFACE_METHOD(RenderDevice, CreateBuffer,                This, __VA_ARGS__)
-#    define IRenderDevice_CreateShader(This, ...)                  CALL_IFACE_METHOD(RenderDevice, CreateShader,                This, __VA_ARGS__)
-#    define IRenderDevice_CreateTexture(This, ...)                 CALL_IFACE_METHOD(RenderDevice, CreateTexture,               This, __VA_ARGS__)
-#    define IRenderDevice_CreateSampler(This, ...)                 CALL_IFACE_METHOD(RenderDevice, CreateSampler,               This, __VA_ARGS__)
-#    define IRenderDevice_CreateResourceMapping(This, ...)         CALL_IFACE_METHOD(RenderDevice, CreateResourceMapping,       This, __VA_ARGS__)
-#    define IRenderDevice_CreateGraphicsPipelineState(This, ...)   CALL_IFACE_METHOD(RenderDevice, CreateGraphicsPipelineState, This, __VA_ARGS__)
-#    define IRenderDevice_CreateComputePipelineState(This, ...)    CALL_IFACE_METHOD(RenderDevice, CreateComputePipelineState,  This, __VA_ARGS__)
-#    define IRenderDevice_CreateRayTracingPipelineState(This, ...) CALL_IFACE_METHOD(RenderDevice, CreateRayTracingPipelineState, This, __VA_ARGS__)
-#    define IRenderDevice_CreateFence(This, ...)                   CALL_IFACE_METHOD(RenderDevice, CreateFence,                 This, __VA_ARGS__)
-#    define IRenderDevice_CreateQuery(This, ...)                   CALL_IFACE_METHOD(RenderDevice, CreateQuery,                 This, __VA_ARGS__)
-#    define IRenderDevice_CreateRenderPass(This, ...)              CALL_IFACE_METHOD(RenderDevice, CreateRenderPass,            This, __VA_ARGS__)
-#    define IRenderDevice_CreateFramebuffer(This, ...)             CALL_IFACE_METHOD(RenderDevice, CreateFramebuffer,           This, __VA_ARGS__)
-#    define IRenderDevice_GetDeviceCaps(This)                      CALL_IFACE_METHOD(RenderDevice, GetDeviceCaps,               This)
-#    define IRenderDevice_GetTextureFormatInfo(This, ...)          CALL_IFACE_METHOD(RenderDevice, GetTextureFormatInfo,        This, __VA_ARGS__)
-#    define IRenderDevice_GetTextureFormatInfoExt(This, ...)       CALL_IFACE_METHOD(RenderDevice, GetTextureFormatInfoExt,     This, __VA_ARGS__)
-#    define IRenderDevice_ReleaseStaleResources(This, ...)         CALL_IFACE_METHOD(RenderDevice, ReleaseStaleResources,       This, __VA_ARGS__)
-#    define IRenderDevice_IdleGPU(This)                            CALL_IFACE_METHOD(RenderDevice, IdleGPU,                     This)
-#    define IRenderDevice_GetEngineFactory(This)                   CALL_IFACE_METHOD(RenderDevice, GetEngineFactory,            This)
+#    define IRenderDevice_CreateBuffer(This, ...)                    CALL_IFACE_METHOD(RenderDevice, CreateBuffer,                    This, __VA_ARGS__)
+#    define IRenderDevice_CreateShader(This, ...)                    CALL_IFACE_METHOD(RenderDevice, CreateShader,                    This, __VA_ARGS__)
+#    define IRenderDevice_CreateTexture(This, ...)                   CALL_IFACE_METHOD(RenderDevice, CreateTexture,                   This, __VA_ARGS__)
+#    define IRenderDevice_CreateSampler(This, ...)                   CALL_IFACE_METHOD(RenderDevice, CreateSampler,                   This, __VA_ARGS__)
+#    define IRenderDevice_CreateResourceMapping(This, ...)           CALL_IFACE_METHOD(RenderDevice, CreateResourceMapping,           This, __VA_ARGS__)
+#    define IRenderDevice_CreateGraphicsPipelineState(This, ...)     CALL_IFACE_METHOD(RenderDevice, CreateGraphicsPipelineState,     This, __VA_ARGS__)
+#    define IRenderDevice_CreateComputePipelineState(This, ...)      CALL_IFACE_METHOD(RenderDevice, CreateComputePipelineState,      This, __VA_ARGS__)
+#    define IRenderDevice_CreateRayTracingPipelineState(This, ...)   CALL_IFACE_METHOD(RenderDevice, CreateRayTracingPipelineState,   This, __VA_ARGS__)
+#    define IRenderDevice_CreateFence(This, ...)                     CALL_IFACE_METHOD(RenderDevice, CreateFence,                     This, __VA_ARGS__)
+#    define IRenderDevice_CreateQuery(This, ...)                     CALL_IFACE_METHOD(RenderDevice, CreateQuery,                     This, __VA_ARGS__)
+#    define IRenderDevice_CreateRenderPass(This, ...)                CALL_IFACE_METHOD(RenderDevice, CreateRenderPass,                This, __VA_ARGS__)
+#    define IRenderDevice_CreateFramebuffer(This, ...)               CALL_IFACE_METHOD(RenderDevice, CreateFramebuffer,               This, __VA_ARGS__)
+#    define IRenderDevice_CreateBLAS(This, ...)                      CALL_IFACE_METHOD(RenderDevice, CreateBLAS,                      This, __VA_ARGS__)
+#    define IRenderDevice_CreateTLAS(This, ...)                      CALL_IFACE_METHOD(RenderDevice, CreateTLAS,                      This, __VA_ARGS__)
+#    define IRenderDevice_CreateSBT(This, ...)                       CALL_IFACE_METHOD(RenderDevice, CreateSBT,                       This, __VA_ARGS__)
+#    define IRenderDevice_CreatePipelineResourceSignature(This, ...) CALL_IFACE_METHOD(RenderDevice, CreatePipelineResourceSignature, This, __VA_ARGS__)
+#    define IRenderDevice_CreateDeviceMemory(This, ...)              CALL_IFACE_METHOD(RenderDevice, CreateDeviceMemory,              This, __VA_ARGS__)
+#    define IRenderDevice_GetAdapterInfo(This)                       CALL_IFACE_METHOD(RenderDevice, GetAdapterInfo,                  This)
+#    define IRenderDevice_GetDeviceInfo(This)                        CALL_IFACE_METHOD(RenderDevice, GetDeviceInfo,                   This)
+#    define IRenderDevice_GetTextureFormatInfo(This, ...)            CALL_IFACE_METHOD(RenderDevice, GetTextureFormatInfo,            This, __VA_ARGS__)
+#    define IRenderDevice_GetTextureFormatInfoExt(This, ...)         CALL_IFACE_METHOD(RenderDevice, GetTextureFormatInfoExt,         This, __VA_ARGS__)
+#    define IRenderDevice_GetSparseTextureFormatInfo(This, ...)      CALL_IFACE_METHOD(RenderDevice, GetSparseTextureFormatInfo,      This, __VA_ARGS__)
+#    define IRenderDevice_ReleaseStaleResources(This, ...)           CALL_IFACE_METHOD(RenderDevice, ReleaseStaleResources,           This, __VA_ARGS__)
+#    define IRenderDevice_IdleGPU(This)                              CALL_IFACE_METHOD(RenderDevice, IdleGPU,                         This)
+#    define IRenderDevice_GetEngineFactory(This)                     CALL_IFACE_METHOD(RenderDevice, GetEngineFactory,                This)
 // clang-format on
 
 #endif

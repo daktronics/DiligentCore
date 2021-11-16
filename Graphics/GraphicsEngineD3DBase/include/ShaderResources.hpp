@@ -1,27 +1,27 @@
 /*
  *  Copyright 2019-2021 Diligent Graphics LLC
  *  Copyright 2015-2019 Egor Yusov
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  In no event and under no legal theory, whether in tort (including negligence), 
- *  contract, or otherwise, unless required by applicable law (such as deliberate 
+ *  In no event and under no legal theory, whether in tort (including negligence),
+ *  contract, or otherwise, unless required by applicable law (such as deliberate
  *  and grossly negligent acts) or agreed to in writing, shall any Contributor be
- *  liable for any damages, including any direct, indirect, special, incidental, 
- *  or consequential damages of any character arising as a result of this License or 
- *  out of the use or inability to use the software (including but not limited to damages 
- *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and 
- *  all other commercial damages or losses), even if such Contributor has been advised 
+ *  liable for any damages, including any direct, indirect, special, incidental,
+ *  or consequential damages of any character arising as a result of this License or
+ *  out of the use or inability to use the software (including but not limited to damages
+ *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and
+ *  all other commercial damages or losses), even if such Contributor has been advised
  *  of the possibility of such damages.
  */
 
@@ -86,8 +86,8 @@ struct D3DShaderResourceAttribs
 /* 8 */ const Uint16 BindPoint;
 /*10 */ const Uint16 BindCount;
 
-    //            4               4                 24           
-    // bit | 0  1  2  3   |  4  5  6  7  |  8   9  10   ...   31  |   
+    //            4               4                 24
+    // bit | 0  1  2  3   |  4  5  6  7  |  8   9  10   ...   31  |
     //     |              |              |                        |
     //     |  InputType   |   SRV Dim    | SamplerOrTexSRVIdBits  |
     static constexpr const Uint32 ShaderInputTypeBits    =  4;
@@ -101,7 +101,7 @@ struct D3DShaderResourceAttribs
 private:
          // We need to use Uint32 instead of the actual type for reliability and correctness.
          // There originally was a problem when the type of InputType was D3D_SHADER_INPUT_TYPE:
-         // the value of D3D_SIT_UAV_RWBYTEADDRESS (8) was interpreted as -8 (as the underlying enum type 
+         // the value of D3D_SIT_UAV_RWBYTEADDRESS (8) was interpreted as -8 (as the underlying enum type
          // is signed) causing errors
 /*12.0*/ const Uint32  InputType          : ShaderInputTypeBits;     // Max value: D3D_SIT_UAV_RWSTRUCTURED_WITH_COUNTER == 11
 /*12.4*/ const Uint32  SRVDimension       : SRVDimBits;              // Max value: D3D_SRV_DIMENSION_BUFFEREX == 11
@@ -221,15 +221,6 @@ public:
         return BindPoint != InvalidBindPoint;
     }
 
-    String GetPrintName(Uint32 ArrayInd) const
-    {
-        VERIFY_EXPR(ArrayInd < BindCount);
-        if (BindCount > 1)
-            return String(Name) + '[' + std::to_string(ArrayInd) + ']';
-        else
-            return Name;
-    }
-
     bool IsCompatibleWith(const D3DShaderResourceAttribs& Attribs) const
     {
         return BindPoint == Attribs.BindPoint &&
@@ -244,13 +235,25 @@ public:
         return ComputeHash(BindPoint, BindCount, InputType, SRVDimension, SamplerOrTexSRVId);
     }
 
-    HLSLShaderResourceDesc GetHLSLResourceDesc() const;
+    HLSLShaderResourceDesc GetHLSLResourceDesc() const
+    {
+        HLSLShaderResourceDesc ResourceDesc;
+        ResourceDesc.Name           = Name;
+        ResourceDesc.ArraySize      = BindCount;
+        ResourceDesc.ShaderRegister = BindPoint;
+        ResourceDesc.Type           = GetShaderResourceType();
+
+        return ResourceDesc;
+    }
 
     Uint32 GetCombinedSamplerId() const
     {
         VERIFY(GetInputType() == D3D_SIT_TEXTURE && GetSRVDimension() != D3D_SRV_DIMENSION_BUFFER, "Invalid input type: D3D_SIT_TEXTURE is expected");
         return SamplerOrTexSRVId;
     }
+
+    SHADER_RESOURCE_TYPE    GetShaderResourceType() const;
+    PIPELINE_RESOURCE_FLAGS GetPipelineResourceFlags() const;
 
 private:
     friend class ShaderResources;
@@ -381,6 +384,11 @@ public:
             HandleAccelStruct(AS, n);
         }
     }
+    template <typename THandler>
+    void ProcessResources(THandler Handler) const
+    {
+        ProcessResources(Handler, Handler, Handler, Handler, Handler, Handler, Handler);
+    }
 
     bool        IsCompatibleWith(const ShaderResources& Resources) const;
     bool        IsUsingCombinedTextureSamplers() const { return m_SamplerSuffix != nullptr; }
@@ -389,17 +397,6 @@ public:
 
     size_t GetHash() const;
 
-    SHADER_RESOURCE_VARIABLE_TYPE FindVariableType(const D3DShaderResourceAttribs&   ResourceAttribs,
-                                                   const PipelineResourceLayoutDesc& ResourceLayout) const;
-
-    Int32 FindImmutableSampler(const D3DShaderResourceAttribs&   ResourceAttribs,
-                               const PipelineResourceLayoutDesc& ResourceLayoutDesc,
-                               bool                              LogImmutableSamplerArrayError) const;
-
-    D3DShaderResourceCounters CountResources(const PipelineResourceLayoutDesc&    ResourceLayout,
-                                             const SHADER_RESOURCE_VARIABLE_TYPE* AllowedVarTypes,
-                                             Uint32                               NumAllowedTypes,
-                                             bool                                 CountImmutableSamplers) const noexcept;
 #ifdef DILIGENT_DEVELOPMENT
     static void DvpVerifyResourceLayout(const PipelineResourceLayoutDesc& ResourceLayout,
                                         const ShaderResources* const      pShaderResources[],

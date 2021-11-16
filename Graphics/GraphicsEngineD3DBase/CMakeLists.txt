@@ -2,9 +2,12 @@ cmake_minimum_required (VERSION 3.10)
 
 project(Diligent-GraphicsEngineD3DBase CXX)
 
-set(INCLUDE 
+set(DILIGENT_NVAPI_PATH "" CACHE PATH "Path to NVAPI to enable D3D11/D3D12 extensions")
+
+set(INCLUDE
     include/D3DCommonTypeConversions.hpp
     include/D3DErrors.hpp
+    include/D3DTileMappingHelper.hpp
     include/D3DShaderResourceLoader.hpp
     include/D3DTypeConversionImpl.hpp
     include/D3DViewDescConversionImpl.hpp
@@ -14,15 +17,16 @@ set(INCLUDE
     include/RenderDeviceD3DBase.hpp
     include/ShaderD3DBase.hpp
     include/ShaderResources.hpp
-    include/ShaderVariableD3DBase.hpp
+    include/ShaderVariableD3D.hpp
     include/SwapChainD3DBase.hpp
+    include/NVApiLoader.hpp
 )
 
 set(INTERFACE
     interface/ShaderD3D.h
 )
 
-set(SOURCE 
+set(SOURCE
     src/D3DCommonTypeConversions.cpp
     src/DXGITypeConversions.cpp
     src/ShaderD3DBase.cpp
@@ -36,11 +40,11 @@ set(HLSL_DEFINITIONS include/HLSLDefinitions.fxh)
 set(HLSL_DEFINITIONS_INC ${CMAKE_CURRENT_SOURCE_DIR}/include/HLSLDefinitions_inc.fxh)
 set_source_files_properties(${HLSL_DEFINITIONS_INC} PROPERTIES GENERATED TRUE)
 
-add_library(Diligent-GraphicsEngineD3DBase STATIC 
+add_library(Diligent-GraphicsEngineD3DBase STATIC
     ${SOURCE} ${INCLUDE} ${INTERFACE}
 
-    # A target created in the same directory (CMakeLists.txt file) that specifies any output of the 
-    # custom command as a source file is given a rule to generate the file using the command at build time. 
+    # A target created in the same directory (CMakeLists.txt file) that specifies any output of the
+    # custom command as a source file is given a rule to generate the file using the command at build time.
     ${HLSL_DEFINITIONS_INC}
 )
 
@@ -53,7 +57,7 @@ add_custom_command(OUTPUT ${HLSL_DEFINITIONS_INC} # We must use full path here!
 )
 
 add_library(Diligent-GraphicsEngineD3DBaseInterface INTERFACE)
-target_link_libraries(Diligent-GraphicsEngineD3DBaseInterface INTERFACE Diligent-GraphicsEngineInterface)
+target_link_libraries     (Diligent-GraphicsEngineD3DBaseInterface INTERFACE Diligent-GraphicsEngineInterface)
 target_include_directories(Diligent-GraphicsEngineD3DBaseInterface
 INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface>
@@ -116,8 +120,21 @@ if(MSVC)
         endif()
     elseif(CMAKE_SYSTEM_VERSION VERSION_EQUAL "8.1")
         # D3Dcompiler_47.dll from Win8.1 SDK is ancient (from 2013) and fails to
-        # compile a number of test shaders. Use the compiler from Visual Studio 
+        # compile a number of test shaders. Use the compiler from Visual Studio
         # executable path instead
         set(VS_D3D_COMPILER_PATH "\"$(VC_ExecutablePath_x64_${ARCH_SUFFIX})\\D3Dcompiler_47.dll\"" CACHE INTERNAL "D3Dcompiler_47.dll path")
     endif()
+endif()
+
+
+if(EXISTS "${DILIGENT_NVAPI_PATH}/nvapi.h")
+    message(STATUS "Using NVApi from ${DILIGENT_NVAPI_PATH}")
+    if(${CMAKE_SIZEOF_VOID_P} EQUAL 8)
+        set(DILIGENT_NVAPI_LIB_PATH "${DILIGENT_NVAPI_PATH}/amd64/nvapi64.lib" CACHE INTERNAL "NVAPI lib path")
+    else()
+        set(DILIGENT_NVAPI_LIB_PATH "${DILIGENT_NVAPI_PATH}/x86/nvapi.lib" CACHE INTERNAL "NVAPI lib path")
+    endif()
+    target_include_directories(Diligent-GraphicsEngineD3DBase PUBLIC ${DILIGENT_NVAPI_PATH})
+    target_link_libraries(Diligent-GraphicsEngineD3DBase PRIVATE ${DILIGENT_NVAPI_LIB_PATH})
+    target_compile_definitions(Diligent-GraphicsEngineD3DBase PUBLIC DILIGENT_ENABLE_D3D_NVAPI)
 endif()

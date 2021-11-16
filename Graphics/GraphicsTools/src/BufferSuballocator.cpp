@@ -1,33 +1,34 @@
 /*
  *  Copyright 2019-2021 Diligent Graphics LLC
  *  Copyright 2015-2019 Egor Yusov
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  In no event and under no legal theory, whether in tort (including negligence), 
- *  contract, or otherwise, unless required by applicable law (such as deliberate 
+ *  In no event and under no legal theory, whether in tort (including negligence),
+ *  contract, or otherwise, unless required by applicable law (such as deliberate
  *  and grossly negligent acts) or agreed to in writing, shall any Contributor be
- *  liable for any damages, including any direct, indirect, special, incidental, 
- *  or consequential damages of any character arising as a result of this License or 
- *  out of the use or inability to use the software (including but not limited to damages 
- *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and 
- *  all other commercial damages or losses), even if such Contributor has been advised 
+ *  liable for any damages, including any direct, indirect, special, incidental,
+ *  or consequential damages of any character arising as a result of this License or
+ *  out of the use or inability to use the software (including but not limited to damages
+ *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and
+ *  all other commercial damages or losses), even if such Contributor has been advised
  *  of the possibility of such damages.
  */
 
 #include "BufferSuballocator.h"
 
 #include <mutex>
+#include <atomic>
 
 #include "DebugUtilities.hpp"
 #include "ObjectBase.hpp"
@@ -124,10 +125,19 @@ public:
                            IRenderDevice*                      pDevice,
                            const BufferSuballocatorCreateInfo& CreateInfo) :
         // clang-format off
-        TBase                    {pRefCounters},
-        m_Mgr                    {CreateInfo.Desc.uiSizeInBytes, DefaultRawMemoryAllocator::GetAllocator()},
-        m_Buffer                 {pDevice, CreateInfo.Desc},
-        m_ExpansionSize          {CreateInfo.ExpansionSize},
+        TBase{pRefCounters},
+        m_Mgr{StaticCast<size_t>(CreateInfo.Desc.Size), DefaultRawMemoryAllocator::GetAllocator()},
+        m_Buffer
+        {
+            pDevice,
+            DynamicBufferCreateInfo
+            {
+                CreateInfo.Desc,
+                CreateInfo.ExpansionSize != 0 ? CreateInfo.ExpansionSize : static_cast<Uint32>(CreateInfo.Desc.Size), // MemoryPageSize
+                CreateInfo.VirtualSize
+            }
+        },
+        m_ExpansionSize{CreateInfo.ExpansionSize},
         m_SuballocationsAllocator
         {
             DefaultRawMemoryAllocator::GetAllocator(),
@@ -137,16 +147,37 @@ public:
     // clang-format on
     {}
 
+    ~BufferSuballocatorImpl()
+    {
+        VERIFY_EXPR(m_AllocationCount.load() == 0);
+    }
+
     virtual IBuffer* GetBuffer(IRenderDevice* pDevice, IDeviceContext* pContext) override final
     {
-        Uint32 Size = 0;
+        size_t Size = 0;
         {
             std::lock_guard<std::mutex> Lock{m_MgrMtx};
-            Size = static_cast<Uint32>(m_Mgr.GetMaxSize());
+            Size = m_Mgr.GetMaxSize();
         }
-        if (Size != m_Buffer.GetDesc().uiSizeInBytes)
+        if (Size != m_Buffer.GetDesc().Size)
         {
             m_Buffer.Resize(pDevice, pContext, Size);
+
+            // Actual buffer size may be larger due to alignment requirements
+            // (for sparse buffers, the size is aligned by the memory page size)
+            const auto BufferSize = m_Buffer.GetDesc().Size;
+            VERIFY_EXPR(BufferSize >= Size);
+            if (BufferSize > Size)
+            {
+                std::lock_guard<std::mutex> Lock{m_MgrMtx};
+                // Since we released the mutex, the size may have changed in other thread
+                Size = m_Mgr.GetMaxSize();
+                if (BufferSize > Size)
+                {
+                    m_Mgr.Extend(StaticCast<size_t>(BufferSize - Size));
+                }
+                VERIFY_EXPR(BufferSize == m_Mgr.GetMaxSize());
+            }
         }
 
         return m_Buffer.GetBuffer(pDevice, pContext);
@@ -176,7 +207,7 @@ public:
             while (!Subregion.IsValid())
             {
                 auto ExtraSize = m_ExpansionSize != 0 ?
-                    std::max(m_ExpansionSize, Align(Size, Alignment)) :
+                    std::max(m_ExpansionSize, AlignUp(Size, Alignment)) :
                     m_Mgr.GetMaxSize();
 
                 m_Mgr.Extend(ExtraSize);
@@ -188,8 +219,8 @@ public:
         BufferSuballocationImpl* pSuballocation{
             NEW_RC_OBJ(m_SuballocationsAllocator, "BufferSuballocationImpl instance", BufferSuballocationImpl)
             (
-                this, 
-                Align(static_cast<Uint32>(Subregion.UnalignedOffset), Alignment),
+                this,
+                AlignUp(static_cast<Uint32>(Subregion.UnalignedOffset), Alignment),
                 Size,
                 std::move(Subregion)
             )
@@ -197,12 +228,14 @@ public:
         // clang-format on
 
         pSuballocation->QueryInterface(IID_BufferSuballocation, reinterpret_cast<IObject**>(ppSuballocation));
+        m_AllocationCount.fetch_add(1);
     }
 
     void Free(VariableSizeAllocationsManager::Allocation&& Subregion)
     {
         std::lock_guard<std::mutex> Lock{m_MgrMtx};
         m_Mgr.Free(std::move(Subregion));
+        m_AllocationCount.fetch_add(-1);
     }
 
     virtual Uint32 GetVersion() const override final
@@ -210,10 +243,13 @@ public:
         return m_Buffer.GetVersion();
     }
 
-    virtual Uint32 GetFreeSize() override final
+    virtual void GetUsageStats(BufferSuballocatorUsageStats& UsageStats) override final
     {
         std::lock_guard<std::mutex> Lock{m_MgrMtx};
-        return static_cast<Uint32>(m_Mgr.GetFreeSize());
+        UsageStats.Size             = m_Mgr.GetMaxSize();
+        UsageStats.UsedSize         = m_Mgr.GetUsedSize();
+        UsageStats.MaxFreeChunkSize = m_Mgr.GetMaxFreeBlockSize();
+        UsageStats.AllocationCount  = m_AllocationCount.load();
     }
 
 private:
@@ -223,6 +259,8 @@ private:
     DynamicBuffer m_Buffer;
 
     const Uint32 m_ExpansionSize;
+
+    std::atomic<Int32> m_AllocationCount{0};
 
     FixedBlockMemoryAllocator m_SuballocationsAllocator;
 };

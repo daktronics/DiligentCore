@@ -1,27 +1,27 @@
 /*
  *  Copyright 2019-2021 Diligent Graphics LLC
  *  Copyright 2015-2019 Egor Yusov
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  In no event and under no legal theory, whether in tort (including negligence), 
- *  contract, or otherwise, unless required by applicable law (such as deliberate 
+ *  In no event and under no legal theory, whether in tort (including negligence),
+ *  contract, or otherwise, unless required by applicable law (such as deliberate
  *  and grossly negligent acts) or agreed to in writing, shall any Contributor be
- *  liable for any damages, including any direct, indirect, special, incidental, 
- *  or consequential damages of any character arising as a result of this License or 
- *  out of the use or inability to use the software (including but not limited to damages 
- *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and 
- *  all other commercial damages or losses), even if such Contributor has been advised 
+ *  liable for any damages, including any direct, indirect, special, incidental,
+ *  or consequential damages of any character arising as a result of this License or
+ *  out of the use or inability to use the software (including but not limited to damages
+ *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and
+ *  all other commercial damages or losses), even if such Contributor has been advised
  *  of the possibility of such damages.
  */
 
@@ -135,9 +135,62 @@ bool BasicFileSystem::IsPathAbsolute(const Diligent::Char* strPath)
 
 #if PLATFORM_WIN32 || PLATFORM_UNIVERSAL_WINDOWS
     return strPath[1] == ':' && (strPath[2] == '\\' || strPath[2] == '/');
-#elif PLATFORM_LINUX || PLATFORM_MACOS || PLATFORM_IOS || PLATFORM_ANDROID
+#elif PLATFORM_LINUX || PLATFORM_MACOS || PLATFORM_IOS || PLATFORM_TVOS || PLATFORM_ANDROID || PLATFORM_EMSCRIPTEN
     return strPath[0] == '/';
 #else
 #    error Unknown platform.
 #endif
+}
+
+std::string BasicFileSystem::SimplifyPath(const Diligent::Char* Path, Diligent::Char SlashSymbol)
+{
+    if (Path == nullptr)
+        return "";
+
+    auto IsSlash = [](const Diligent::Char c) {
+        return c == '/' || c == '\\';
+    };
+
+    std::vector<std::string> PathComponents;
+
+    const auto* c = Path;
+    while (*c != '\0')
+    {
+        while (*c != '\0' && IsSlash(*c))
+            ++c;
+
+        if (*c == '\0')
+        {
+            // a/
+            break;
+        }
+
+        std::string PathCmp;
+        while (*c != '\0' && !IsSlash(*c))
+            PathCmp.push_back(*(c++));
+
+        if (PathCmp == ".")
+        {
+            // Skip /.
+            continue;
+        }
+        else if (PathCmp == ".." && !PathComponents.empty() && PathComponents.back() != "..")
+        {
+            // Pop previous subdirectory if /.. is found, but only if there is no .. already
+            PathComponents.pop_back();
+        }
+        else
+        {
+            PathComponents.emplace_back(std::move(PathCmp));
+        }
+    }
+
+    std::string SimplifiedPath;
+    for (const auto& Cmp : PathComponents)
+    {
+        if (!SimplifiedPath.empty())
+            SimplifiedPath.push_back(SlashSymbol);
+        SimplifiedPath.append(Cmp);
+    }
+    return SimplifiedPath;
 }

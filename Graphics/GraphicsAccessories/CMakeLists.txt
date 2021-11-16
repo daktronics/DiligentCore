@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 3.6)
 
 project(Diligent-GraphicsAccessories CXX)
 
-set(INTERFACE 
+set(INTERFACE
     interface/ColorConversion.h
     interface/GraphicsAccessories.hpp
     interface/GraphicsTypesOutputInserters.hpp
@@ -31,11 +31,11 @@ PUBLIC
     $<INSTALL_INTERFACE:include/${TARGET_RELATIVE_PATH}/interface
 )
 
-target_link_libraries(Diligent-GraphicsAccessories 
+target_link_libraries(Diligent-GraphicsAccessories
 PRIVATE
     Diligent-BuildSettings
 PUBLIC
-    Diligent-Common 
+    Diligent-Common
     Diligent-GraphicsEngineInterface
 )
 

@@ -1,27 +1,27 @@
 /*
  *  Copyright 2019-2021 Diligent Graphics LLC
  *  Copyright 2015-2019 Egor Yusov
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  In no event and under no legal theory, whether in tort (including negligence), 
- *  contract, or otherwise, unless required by applicable law (such as deliberate 
+ *  In no event and under no legal theory, whether in tort (including negligence),
+ *  contract, or otherwise, unless required by applicable law (such as deliberate
  *  and grossly negligent acts) or agreed to in writing, shall any Contributor be
- *  liable for any damages, including any direct, indirect, special, incidental, 
- *  or consequential damages of any character arising as a result of this License or 
- *  out of the use or inability to use the software (including but not limited to damages 
- *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and 
- *  all other commercial damages or losses), even if such Contributor has been advised 
+ *  liable for any damages, including any direct, indirect, special, incidental,
+ *  or consequential damages of any character arising as a result of this License or
+ *  out of the use or inability to use the software (including but not limited to damages
+ *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and
+ *  all other commercial damages or losses), even if such Contributor has been advised
  *  of the possibility of such damages.
  */
 
@@ -42,28 +42,7 @@ static const INTERFACE_ID IID_Shader =
 
 // clang-format off
 
-/// Describes the shader type
-DILIGENT_TYPED_ENUM(SHADER_TYPE, Uint32)
-{
-    SHADER_TYPE_UNKNOWN          = 0x0000, ///< Unknown shader type
-    SHADER_TYPE_VERTEX           = 0x0001, ///< Vertex shader
-    SHADER_TYPE_PIXEL            = 0x0002, ///< Pixel (fragment) shader
-    SHADER_TYPE_GEOMETRY         = 0x0004, ///< Geometry shader
-    SHADER_TYPE_HULL             = 0x0008, ///< Hull (tessellation control) shader
-    SHADER_TYPE_DOMAIN           = 0x0010, ///< Domain (tessellation evaluation) shader
-    SHADER_TYPE_COMPUTE          = 0x0020, ///< Compute shader
-    SHADER_TYPE_AMPLIFICATION    = 0x0040, ///< Amplification (task) shader
-    SHADER_TYPE_MESH             = 0x0080, ///< Mesh shader
-    SHADER_TYPE_RAY_GEN          = 0x0100, ///< Ray generation shader
-    SHADER_TYPE_RAY_MISS         = 0x0200, ///< Ray miss shader
-    SHADER_TYPE_RAY_CLOSEST_HIT  = 0x0400, ///< Ray closest hit shader
-    SHADER_TYPE_RAY_ANY_HIT      = 0x0800, ///< Ray any hit shader
-    SHADER_TYPE_RAY_INTERSECTION = 0x1000, ///< Ray intersection shader
-    SHADER_TYPE_CALLABLE         = 0x2000, ///< Callable shader
-    SHADER_TYPE_LAST             = SHADER_TYPE_CALLABLE
-};
-DEFINE_FLAG_ENUM_OPERATORS(SHADER_TYPE);
-
+typedef struct Version ShaderVersion;
 
 /// Describes the shader source code language
 DILIGENT_TYPED_ENUM(SHADER_SOURCE_LANGUAGE, Uint32)
@@ -83,7 +62,7 @@ DILIGENT_TYPED_ENUM(SHADER_SOURCE_LANGUAGE, Uint32)
     /// The source language is GLSL that should be compiled verbatim
 
     /// By default the engine prepends GLSL shader source code with platform-specific
-    /// definitions. For instance it adds appropriate #version directive (e.g. '#version 430 core' or 
+    /// definitions. For instance it adds appropriate #version directive (e.g. '#version 430 core' or
     /// '#version 310 es') so that the same source will work on different versions of desktop OpenGL and OpenGLES.
     /// When SHADER_SOURCE_LANGUAGE_GLSL_VERBATIM is used, the source code will be compiled as is.
     /// Note that shader macros are ignored when compiling GLSL verbatim in OpenGL backend, and an application
@@ -101,7 +80,9 @@ DILIGENT_TYPED_ENUM(SHADER_COMPILER, Uint32)
     ///     - OpenGL(ES) GLSL: native compiler
     ///     - OpenGL(ES) HLSL: HLSL2GLSL converter and native compiler
     ///     - Vulkan GLSL:     built-in glslang
-    ///     - Vulkan HLSL:     built-in glslang (with limitted support for Shader Model 6.x)
+    ///     - Vulkan HLSL:     built-in glslang (with limited support for Shader Model 6.x)
+    ///     - Metal GLSL/HLSL: built-in glslang (HLSL with limited support for Shader Model 6.x)
+    ///     - Metal MSL:       native compiler
     SHADER_COMPILER_DEFAULT = 0,
 
     /// Built-in glslang compiler for GLSL and HLSL.
@@ -109,7 +90,7 @@ DILIGENT_TYPED_ENUM(SHADER_COMPILER, Uint32)
 
     /// Modern HLSL compiler (DXC) for Direct3D12 and Vulkan with Shader Model 6.x support.
     SHADER_COMPILER_DXC,
-        
+
     /// Legacy HLSL compiler (FXC) for Direct3D11 and Direct3D12 supporting shader models up to 5.1.
     SHADER_COMPILER_FXC,
 
@@ -185,10 +166,11 @@ struct ShaderMacro
     const Char* Definition DEFAULT_INITIALIZER(nullptr);
 
 #if DILIGENT_CPP_INTERFACE
-    ShaderMacro() noexcept
+    constexpr ShaderMacro() noexcept
     {}
-    ShaderMacro(const Char* _Name,
-                const Char* _Def) noexcept :
+
+    constexpr ShaderMacro(const Char* _Name,
+                          const Char* _Def) noexcept :
         Name{_Name},
         Definition{_Def}
     {}
@@ -196,30 +178,24 @@ struct ShaderMacro
 };
 typedef struct ShaderMacro ShaderMacro;
 
-/// Shader version
-struct ShaderVersion
+
+// clang-format off
+
+/// Shader compilation flags
+DILIGENT_TYPED_ENUM(SHADER_COMPILE_FLAGS, Uint32)
 {
-    /// Major revision
-    Uint8 Major DEFAULT_INITIALIZER(0);
+    /// No flags.
+    SHADER_COMPILE_FLAG_NONE = 0x0,
 
-    /// Minor revision
-    Uint8 Minor DEFAULT_INITIALIZER(0);
+    /// Enable unbounded resource arrays (e.g. Texture2D g_Texture[]).
+    SHADER_COMPILE_FLAG_ENABLE_UNBOUNDED_ARRAYS = 0x01,
 
-#if DILIGENT_CPP_INTERFACE
-    ShaderVersion() noexcept
-    {}
-    ShaderVersion(Uint8 _Major, Uint8 _Minor) noexcept :
-        Major{_Major},
-        Minor{_Minor}
-    {}
-
-    bool operator==(const ShaderVersion& rhs) const
-    {
-        return Major == rhs.Major && Minor == rhs.Minor;
-    }
-#endif
+    SHADER_COMPILE_FLAG_LAST = SHADER_COMPILE_FLAG_ENABLE_UNBOUNDED_ARRAYS
 };
-typedef struct ShaderVersion ShaderVersion;
+DEFINE_FLAG_ENUM_OPERATORS(SHADER_COMPILE_FLAGS);
+
+// clang-format on
+
 
 /// Shader creation attributes
 struct ShaderCreateInfo
@@ -245,7 +221,7 @@ struct ShaderCreateInfo
     /// the converter will write pointer to the conversion stream to *ppConversionStream
     /// the first time and will use it in all subsequent times.
     /// For all subsequent conversions, FilePath member must be the same, or
-    /// new stream will be crated and warning message will be displayed.
+    /// new stream will be created and warning message will be displayed.
     struct IHLSL2GLSLConversionStream** ppConversionStream DEFAULT_INITIALIZER(nullptr);
 
     /// Shader source
@@ -264,10 +240,22 @@ struct ShaderCreateInfo
     ///        HLSL shaders need to be compiled against 4.0 profile or higher.
     const void* ByteCode DEFAULT_INITIALIZER(nullptr);
 
-    /// Size of the compiled shader bytecode
+    union
+    {
+        /// Length of the source code, when Source is not null.
 
-    /// Byte code size (in bytes) must be provided if ByteCode is not null
-    size_t ByteCodeSize DEFAULT_INITIALIZER(0);
+        /// When Source is not null and is not a null-terminated string, this member
+        /// should be used to specify the length of the source code.
+        /// If SourceLength is zero, the source code string is assumed to be
+        /// null-terminated.
+        size_t SourceLength DEFAULT_INITIALIZER(0);
+
+
+        /// Size of the compiled shader byte code, when ByteCode is not null.
+
+        /// Byte code size (in bytes) must not be zero if ByteCode is not null.
+        size_t ByteCodeSize;
+    };
 
     /// Shader entry point
 
@@ -285,6 +273,7 @@ struct ShaderCreateInfo
     /// the sampler assigned to the shader resource view is automatically set when
     /// the view is bound. Otherwise samplers need to be explicitly set similar to other
     /// shader variables.
+    /// This member has no effect if the shader is used in the PSO that uses pipeline resource signature(s).
     bool UseCombinedTextureSamplers DEFAULT_INITIALIZER(false);
 
     /// If UseCombinedTextureSamplers is true, defines the suffix added to the
@@ -292,6 +281,7 @@ struct ShaderCreateInfo
     /// for default value "_sampler", a texture named "tex" will be combined
     /// with sampler named "tex_sampler".
     /// If UseCombinedTextureSamplers is false, this member is ignored.
+    /// This member has no effect if the shader is used in the PSO that uses pipeline resource signature(s).
     const Char* CombinedSamplerSuffix DEFAULT_INITIALIZER("_sampler");
 
     /// Shader description. See Diligent::ShaderDesc.
@@ -321,6 +311,8 @@ struct ShaderCreateInfo
     /// supported by the device.
     ShaderVersion GLESSLVersion DEFAULT_INITIALIZER({});
 
+    /// Shader compile flags (see Diligent::SHADER_COMPILE_FLAGS).
+    SHADER_COMPILE_FLAGS CompileFlags DEFAULT_INITIALIZER(SHADER_COMPILE_FLAG_NONE);
 
     /// Memory address where pointer to the compiler messages data blob will be written
 
@@ -347,7 +339,7 @@ DILIGENT_TYPED_ENUM(SHADER_RESOURCE_TYPE, Uint8)
     /// Shader resource view of a buffer (read-only storage image)
     SHADER_RESOURCE_TYPE_BUFFER_SRV,
 
-    /// Unordered access view of a texture (sotrage image)
+    /// Unordered access view of a texture (storage image)
     SHADER_RESOURCE_TYPE_TEXTURE_UAV,
 
     /// Unordered access view of a buffer (storage buffer)
@@ -361,7 +353,7 @@ DILIGENT_TYPED_ENUM(SHADER_RESOURCE_TYPE, Uint8)
 
     /// Acceleration structure
     SHADER_RESOURCE_TYPE_ACCEL_STRUCT,
-    
+
     SHADER_RESOURCE_TYPE_LAST = SHADER_RESOURCE_TYPE_ACCEL_STRUCT
 };
 // clang-format on
@@ -370,12 +362,12 @@ DILIGENT_TYPED_ENUM(SHADER_RESOURCE_TYPE, Uint8)
 struct ShaderResourceDesc
 {
 #if DILIGENT_CPP_INTERFACE
-    ShaderResourceDesc() noexcept
+    constexpr ShaderResourceDesc() noexcept
     {}
 
-    ShaderResourceDesc(const char*          _Name,
-                       SHADER_RESOURCE_TYPE _Type,
-                       Uint32               _ArraySize) noexcept :
+    constexpr ShaderResourceDesc(const char*          _Name,
+                                 SHADER_RESOURCE_TYPE _Type,
+                                 Uint32               _ArraySize) noexcept :
         Name{_Name},
         Type{_Type},
         ArraySize{_ArraySize}

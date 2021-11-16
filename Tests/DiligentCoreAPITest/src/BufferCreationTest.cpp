@@ -1,27 +1,27 @@
 /*
  *  Copyright 2019-2021 Diligent Graphics LLC
  *  Copyright 2015-2019 Egor Yusov
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  In no event and under no legal theory, whether in tort (including negligence), 
- *  contract, or otherwise, unless required by applicable law (such as deliberate 
+ *  In no event and under no legal theory, whether in tort (including negligence),
+ *  contract, or otherwise, unless required by applicable law (such as deliberate
  *  and grossly negligent acts) or agreed to in writing, shall any Contributor be
- *  liable for any damages, including any direct, indirect, special, incidental, 
- *  or consequential damages of any character arising as a result of this License or 
- *  out of the use or inability to use the software (including but not limited to damages 
- *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and 
- *  all other commercial damages or losses), even if such Contributor has been advised 
+ *  liable for any damages, including any direct, indirect, special, incidental,
+ *  or consequential damages of any character arising as a result of this License or
+ *  out of the use or inability to use the software (including but not limited to damages
+ *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and
+ *  all other commercial damages or losses), even if such Contributor has been advised
  *  of the possibility of such damages.
  */
 
@@ -71,8 +71,8 @@ protected:
         auto* pEnv    = TestingEnvironment::GetInstance();
         auto* pDevice = pEnv->GetDevice();
 
-        const auto DevCaps = pDevice->GetDeviceCaps();
-        switch (DevCaps.DevType)
+        const auto& DevInfo = pDevice->GetDeviceInfo();
+        switch (DevInfo.Type)
         {
 #if D3D11_SUPPORTED
             case RENDER_DEVICE_TYPE_D3D11:
@@ -128,13 +128,13 @@ TEST_F(BufferCreationTest, CreateVertexBuffer)
     TestingEnvironment::ScopedReleaseResources AutoreleaseResources;
 
     BufferDesc BuffDesc;
-    BuffDesc.Name          = "Vertex buffer";
-    BuffDesc.uiSizeInBytes = 256;
-    BuffDesc.BindFlags     = BIND_VERTEX_BUFFER;
+    BuffDesc.Name      = "Vertex buffer";
+    BuffDesc.Size      = 256;
+    BuffDesc.BindFlags = BIND_VERTEX_BUFFER;
 
     BufferData InitData;
-    InitData.DataSize = BuffDesc.uiSizeInBytes;
-    std::vector<Uint8> DummyData(InitData.DataSize);
+    InitData.DataSize = BuffDesc.Size;
+    std::vector<Uint8> DummyData(static_cast<size_t>(InitData.DataSize));
     InitData.pData = DummyData.data();
     RefCntAutoPtr<IBuffer> pBuffer;
     pDevice->CreateBuffer(BuffDesc, &InitData, &pBuffer);
@@ -151,9 +151,9 @@ TEST_F(BufferCreationTest, CreateIndexBuffer)
     TestingEnvironment::ScopedReleaseResources AutoreleaseResources;
 
     BufferDesc BuffDesc;
-    BuffDesc.Name          = "Index";
-    BuffDesc.uiSizeInBytes = 256;
-    BuffDesc.BindFlags     = BIND_VERTEX_BUFFER;
+    BuffDesc.Name      = "Index";
+    BuffDesc.Size      = 256;
+    BuffDesc.BindFlags = BIND_VERTEX_BUFFER;
 
     BufferData NullData;
 
@@ -171,15 +171,17 @@ TEST_F(BufferCreationTest, CreateFormattedBuffer)
 
     TestingEnvironment::ScopedReleaseResources AutoreleaseResources;
 
-    const auto& DevCaps = pDevice->GetDeviceCaps();
-    if (!(DevCaps.Features.ComputeShaders && DevCaps.Features.IndirectRendering))
+    const auto& DevInfo = pDevice->GetDeviceInfo();
+    if (!DevInfo.Features.ComputeShaders)
     {
         GTEST_SKIP();
     }
+    const auto DrawCaps = pDevice->GetAdapterInfo().DrawCommand.CapFlags;
+    ASSERT_TRUE((DrawCaps & DRAW_COMMAND_CAP_FLAG_DRAW_INDIRECT) != 0) << "Indirect rendering must be supported on all desktop platforms";
 
     BufferDesc BuffDesc;
     BuffDesc.Name              = "Formatted buffer";
-    BuffDesc.uiSizeInBytes     = 256;
+    BuffDesc.Size              = 256;
     BuffDesc.BindFlags         = BIND_UNORDERED_ACCESS | BIND_SHADER_RESOURCE;
     BuffDesc.Mode              = BUFFER_MODE_FORMATTED;
     BuffDesc.ElementByteStride = 16;
@@ -217,15 +219,15 @@ TEST_F(BufferCreationTest, CreateStructuredBuffer)
 
     TestingEnvironment::ScopedReleaseResources AutoreleaseResources;
 
-    const auto& DevCaps = pDevice->GetDeviceCaps();
-    if (!DevCaps.Features.ComputeShaders)
+    const auto& DevInfo = pDevice->GetDeviceInfo();
+    if (!DevInfo.Features.ComputeShaders)
     {
         GTEST_SKIP();
     }
 
     BufferDesc BuffDesc;
     BuffDesc.Name              = "Structured buffer";
-    BuffDesc.uiSizeInBytes     = 256;
+    BuffDesc.Size              = 256;
     BuffDesc.BindFlags         = BIND_SHADER_RESOURCE | BIND_UNORDERED_ACCESS;
     BuffDesc.Mode              = BUFFER_MODE_STRUCTURED;
     BuffDesc.ElementByteStride = 16;
@@ -244,9 +246,9 @@ TEST_F(BufferCreationTest, CreateUniformBuffer)
     TestingEnvironment::ScopedReleaseResources AutoreleaseResources;
 
     BufferDesc BuffDesc;
-    BuffDesc.Name          = "Uniform buffer";
-    BuffDesc.uiSizeInBytes = 256;
-    BuffDesc.BindFlags     = BIND_UNIFORM_BUFFER;
+    BuffDesc.Name      = "Uniform buffer";
+    BuffDesc.Size      = 256;
+    BuffDesc.BindFlags = BIND_UNIFORM_BUFFER;
     RefCntAutoPtr<IBuffer> pBuffer;
     pDevice->CreateBuffer(BuffDesc, nullptr, &pBuffer);
     ASSERT_NE(pBuffer, nullptr) << GetObjectDescString(BuffDesc);
@@ -263,7 +265,7 @@ TEST_F(BufferCreationTest, CreateRawBuffer)
 
     BufferDesc BuffDesc;
     BuffDesc.Name              = "Raw buffer";
-    BuffDesc.uiSizeInBytes     = 256;
+    BuffDesc.Size              = 256;
     BuffDesc.BindFlags         = BIND_VERTEX_BUFFER | BIND_INDEX_BUFFER | BIND_UNORDERED_ACCESS | BIND_SHADER_RESOURCE;
     BuffDesc.Mode              = BUFFER_MODE_RAW;
     BuffDesc.ElementByteStride = 16;
@@ -299,7 +301,7 @@ TEST_F(BufferCreationTest, CreateStagingBuffer)
     BufferDesc BuffDesc;
     BuffDesc.Name           = "Staging buffer";
     BuffDesc.Usage          = USAGE_STAGING;
-    BuffDesc.uiSizeInBytes  = 256;
+    BuffDesc.Size           = 256;
     BuffDesc.BindFlags      = BIND_NONE;
     BuffDesc.CPUAccessFlags = CPU_ACCESS_READ;
 
@@ -339,7 +341,7 @@ TEST_F(BufferCreationTest, CreateDynamicBuffer)
     BufferDesc BuffDesc;
     BuffDesc.Name           = "Dynamic vertex buffer";
     BuffDesc.Usage          = USAGE_DYNAMIC;
-    BuffDesc.uiSizeInBytes  = 256;
+    BuffDesc.Size           = 256;
     BuffDesc.BindFlags      = BIND_VERTEX_BUFFER;
     BuffDesc.CPUAccessFlags = CPU_ACCESS_WRITE;
 
@@ -373,11 +375,11 @@ TEST_F(BufferCreationTest, CreateDynamicBuffer)
 
 TEST_F(BufferCreationTest, CreateUnifiedBuffer)
 {
-    auto*       pEnv        = TestingEnvironment::GetInstance();
-    auto*       pDevice     = pEnv->GetDevice();
-    auto*       pCtx        = pEnv->GetDeviceContext();
-    const auto& AdapterInfo = pDevice->GetDeviceCaps().AdapterInfo;
-    if (AdapterInfo.UnifiedMemory == 0)
+    auto*       pEnv       = TestingEnvironment::GetInstance();
+    auto*       pDevice    = pEnv->GetDevice();
+    auto*       pCtx       = pEnv->GetDeviceContext();
+    const auto& MemoryInfo = pDevice->GetAdapterInfo().Memory;
+    if (MemoryInfo.UnifiedMemory == 0)
     {
         GTEST_SKIP() << "Unified memory is not available on this device";
     }
@@ -387,15 +389,15 @@ TEST_F(BufferCreationTest, CreateUnifiedBuffer)
     BufferDesc BuffDesc;
     BuffDesc.Name           = "Unified vertex buffer";
     BuffDesc.Usage          = USAGE_UNIFIED;
-    BuffDesc.uiSizeInBytes  = 256;
+    BuffDesc.Size           = 256;
     BuffDesc.BindFlags      = BIND_VERTEX_BUFFER;
     BuffDesc.CPUAccessFlags = CPU_ACCESS_WRITE;
 
-    if (AdapterInfo.UnifiedMemoryCPUAccess & CPU_ACCESS_WRITE)
+    if (MemoryInfo.UnifiedMemoryCPUAccess & CPU_ACCESS_WRITE)
     {
         BufferData InitData;
-        InitData.DataSize = BuffDesc.uiSizeInBytes;
-        std::vector<Uint8> DummyData(InitData.DataSize);
+        InitData.DataSize = BuffDesc.Size;
+        std::vector<Uint8> DummyData(static_cast<size_t>(InitData.DataSize));
         InitData.pData = DummyData.data();
         RefCntAutoPtr<IBuffer> pBuffer;
         pDevice->CreateBuffer(BuffDesc, &InitData, &pBuffer);
@@ -406,7 +408,7 @@ TEST_F(BufferCreationTest, CreateUnifiedBuffer)
         LOG_INFO_MESSAGE("Unified memory on this device does not support write access");
     }
 
-    if (AdapterInfo.UnifiedMemoryCPUAccess & CPU_ACCESS_READ)
+    if (MemoryInfo.UnifiedMemoryCPUAccess & CPU_ACCESS_READ)
     {
         BuffDesc.BindFlags      = BIND_NONE;
         BuffDesc.CPUAccessFlags = CPU_ACCESS_READ;

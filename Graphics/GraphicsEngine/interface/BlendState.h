@@ -1,27 +1,27 @@
 /*
  *  Copyright 2019-2021 Diligent Graphics LLC
  *  Copyright 2015-2019 Egor Yusov
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  In no event and under no legal theory, whether in tort (including negligence), 
- *  contract, or otherwise, unless required by applicable law (such as deliberate 
+ *  In no event and under no legal theory, whether in tort (including negligence),
+ *  contract, or otherwise, unless required by applicable law (such as deliberate
  *  and grossly negligent acts) or agreed to in writing, shall any Contributor be
- *  liable for any damages, including any direct, indirect, special, incidental, 
- *  or consequential damages of any character arising as a result of this License or 
- *  out of the use or inability to use the software (including but not limited to damages 
- *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and 
- *  all other commercial damages or losses), even if such Contributor has been advised 
+ *  liable for any damages, including any direct, indirect, special, incidental,
+ *  or consequential damages of any character arising as a result of this License or
+ *  out of the use or inability to use the software (including but not limited to damages
+ *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and
+ *  all other commercial damages or losses), even if such Contributor has been advised
  *  of the possibility of such damages.
  */
 
@@ -44,7 +44,7 @@ DILIGENT_BEGIN_NAMESPACE(Diligent)
 /// [D3D12_BLEND]: https://msdn.microsoft.com/en-us/library/windows/desktop/dn770338(v=vs.85).aspx
 /// [glBlendFuncSeparate]: https://www.opengl.org/wiki/GLAPI/glBlendFuncSeparate
 /// This enumeration defines blend factors for alpha-blending.
-/// It generatlly mirrors [D3D11_BLEND][] and [D3D12_BLEND][] enumerations and is used by RenderTargetBlendDesc structure
+/// It generally mirrors [D3D11_BLEND][] and [D3D12_BLEND][] enumerations and is used by RenderTargetBlendDesc structure
 /// to define source and destination blend factors for color and alpha channels.
 /// \sa [D3D11_BLEND on MSDN][D3D11_BLEND], [D3D12_BLEND on MSDN][D3D12_BLEND], [glBlendFuncSeparate on OpenGL.org][glBlendFuncSeparate]
 DILIGENT_TYPED_ENUM(BLEND_FACTOR, Int8)
@@ -279,7 +279,7 @@ struct RenderTargetBlendDesc
     Bool            BlendEnable           DEFAULT_INITIALIZER(False);
 
     /// Enable or disable a logical operation for this render target. Default value: False.
-	Bool			LogicOperationEnable  DEFAULT_INITIALIZER(False);
+    Bool            LogicOperationEnable  DEFAULT_INITIALIZER(False);
 
     /// Specifies the blend factor to apply to the RGB value output from the pixel shader
     /// Default value: Diligent::BLEND_FACTOR_ONE.
@@ -295,12 +295,12 @@ struct RenderTargetBlendDesc
     BLEND_OPERATION BlendOp               DEFAULT_INITIALIZER(BLEND_OPERATION_ADD);
 
     /// Specifies the blend factor to apply to the alpha value output from the pixel shader.
-    /// Blend factors that end in _COLOR are not allowed. 
+    /// Blend factors that end in _COLOR are not allowed.
     /// Default value: Diligent::BLEND_FACTOR_ONE.
     BLEND_FACTOR    SrcBlendAlpha         DEFAULT_INITIALIZER(BLEND_FACTOR_ONE);
 
     /// Specifies the blend factor to apply to the alpha value in the render target.
-    /// Blend factors that end in _COLOR are not allowed. 
+    /// Blend factors that end in _COLOR are not allowed.
     /// Default value: Diligent::BLEND_FACTOR_ZERO.
     BLEND_FACTOR    DestBlendAlpha        DEFAULT_INITIALIZER(BLEND_FACTOR_ZERO);
 
@@ -311,7 +311,7 @@ struct RenderTargetBlendDesc
 
     /// Defines logical operation for the render target.
     /// Default value: Diligent::LOGIC_OP_NOOP.
-	LOGIC_OPERATION LogicOp               DEFAULT_INITIALIZER(LOGIC_OP_NOOP);
+    LOGIC_OPERATION LogicOp               DEFAULT_INITIALIZER(LOGIC_OP_NOOP);
 
     /// Render target write mask.
     /// Default value: Diligent::COLOR_MASK_ALL.
@@ -319,11 +319,11 @@ struct RenderTargetBlendDesc
 
 #if DILIGENT_CPP_INTERFACE
 
-    RenderTargetBlendDesc()noexcept{}
+    constexpr RenderTargetBlendDesc() noexcept {}
 
-    explicit
+    explicit constexpr
     RenderTargetBlendDesc(Bool            _BlendEnable,
-                          Bool			  _LogicOperationEnable  = RenderTargetBlendDesc{}.LogicOperationEnable ,
+                          Bool            _LogicOperationEnable  = RenderTargetBlendDesc{}.LogicOperationEnable,
                           BLEND_FACTOR    _SrcBlend              = RenderTargetBlendDesc{}.SrcBlend,
                           BLEND_FACTOR    _DestBlend             = RenderTargetBlendDesc{}.DestBlend,
                           BLEND_OPERATION _BlendOp               = RenderTargetBlendDesc{}.BlendOp,
@@ -340,27 +340,27 @@ struct RenderTargetBlendDesc
         SrcBlendAlpha        {_SrcBlendAlpha        },
         DestBlendAlpha       {_DestBlendAlpha       },
         BlendOpAlpha         {_BlendOpAlpha         },
-		LogicOp			     {_LogicOp              },
+        LogicOp              {_LogicOp              },
         RenderTargetWriteMask{_RenderTargetWriteMask}
     {}
 
     /// Comparison operator tests if two structures are equivalent
 
     /// \param [in] rhs - reference to the structure to perform comparison with
-    /// \return 
+    /// \return
     /// - True if all members of the two structures are equal.
     /// - False otherwise
-    bool operator == (const RenderTargetBlendDesc& rhs)const
+    constexpr bool operator == (const RenderTargetBlendDesc& rhs)const
     {
         return BlendEnable           == rhs.BlendEnable    &&
-			   LogicOperationEnable	 == rhs.LogicOperationEnable &&
+               LogicOperationEnable  == rhs.LogicOperationEnable &&
                SrcBlend              == rhs.SrcBlend       &&
                DestBlend             == rhs.DestBlend      &&
                BlendOp               == rhs.BlendOp        &&
                SrcBlendAlpha         == rhs.SrcBlendAlpha  &&
                DestBlendAlpha        == rhs.DestBlendAlpha &&
                BlendOpAlpha          == rhs.BlendOpAlpha   &&
-			   LogicOp               == rhs.LogicOp		   &&
+               LogicOp               == rhs.LogicOp		   &&
                RenderTargetWriteMask == rhs.RenderTargetWriteMask;
     }
 #endif
@@ -389,11 +389,11 @@ struct BlendStateDesc
     // We have to explicitly define constructors because otherwise Apple's clang fails to compile the following legitimate code:
     //     BlendStateDesc{False, False}
 
-    BlendStateDesc() noexcept {}
+    constexpr BlendStateDesc() noexcept {}
 
-    BlendStateDesc(Bool                         _AlphaToCoverageEnable,
-                   Bool                         _IndependentBlendEnable,
-                   const RenderTargetBlendDesc& RT0 = RenderTargetBlendDesc{}) noexcept :
+    constexpr BlendStateDesc(Bool                         _AlphaToCoverageEnable,
+                             Bool                         _IndependentBlendEnable,
+                             const RenderTargetBlendDesc& RT0 = RenderTargetBlendDesc{}) noexcept :
         AlphaToCoverageEnable   {_AlphaToCoverageEnable },
         IndependentBlendEnable  {_IndependentBlendEnable},
         RenderTargets           {RT0}
@@ -410,7 +410,7 @@ struct BlendStateDesc
     ///   but differ in render target other than 0, the operator will return False
     ///   even though the two blend states created from these structures will be identical.
     /// - False otherwise
-    bool operator==(const BlendStateDesc& RHS) const
+    constexpr bool operator==(const BlendStateDesc& RHS) const
     {
         bool bRTsEqual = true;
         for (size_t i = 0; i < MAX_RENDER_TARGETS; ++i)

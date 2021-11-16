@@ -23,20 +23,8 @@ matrix:
   include:
   - os: linux
     compiler: gcc
-    env: 
+    env:
       - CONFIG=Debug
-  - os: osx
-    osx_image: xcode12.2
-    compiler: clang
-    env: 
-      - CONFIG=Debug
-      - IOS=false
-  - os: osx
-    osx_image: xcode12.2
-    compiler: clang
-    env: 
-      - CONFIG=Debug
-      - IOS=true
   - os: linux
     compiler: gcc
     env:
@@ -44,13 +32,13 @@ matrix:
   - os: osx
     osx_image: xcode12.2
     compiler: clang
-    env: 
+    env:
       - CONFIG=Release
       - IOS=false
   - os: osx
     osx_image: xcode12.2
     compiler: clang
-    env: 
+    env:
       - CONFIG=Release
       - IOS=true
 

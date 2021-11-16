@@ -1,13 +1,13 @@
 /*
  *  Copyright 2019-2021 Diligent Graphics LLC
  *  Copyright 2015-2019 Egor Yusov
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -114,7 +114,7 @@ public:
         return shared_from_this();
     }
 
-    VkQueue GetQueue(uint32_t queueFamilyIndex, uint32_t queueIndex);
+    VkQueue GetQueue(HardwareQueueIndex queueFamilyIndex, uint32_t queueIndex);
 
     VkDevice GetVkDevice() const
     {
@@ -132,6 +132,7 @@ public:
     SamplerWrapper      CreateSampler       (const VkSamplerCreateInfo&     SamplerCI,   const char* DebugName = "") const;
     FenceWrapper        CreateFence         (const VkFenceCreateInfo&       FenceCI,     const char* DebugName = "") const;
     RenderPassWrapper   CreateRenderPass    (const VkRenderPassCreateInfo&  RenderPassCI,const char* DebugName = "") const;
+    RenderPassWrapper   CreateRenderPass    (const VkRenderPassCreateInfo2& RenderPassCI,const char* DebugName = "") const;
     DeviceMemoryWrapper AllocateDeviceMemory(const VkMemoryAllocateInfo &   AllocInfo,   const char* DebugName = "") const;
 
     PipelineWrapper     CreateComputePipeline   (const VkComputePipelineCreateInfo&       PipelineCI, VkPipelineCache cache, const char* DebugName = "") const;
@@ -145,6 +146,7 @@ public:
     DescriptorSetLayoutWrapper CreateDescriptorSetLayout(const VkDescriptorSetLayoutCreateInfo& LayoutCI,       const char* DebugName = "") const;
 
     SemaphoreWrapper    CreateSemaphore(const VkSemaphoreCreateInfo& SemaphoreCI, const char* DebugName = "") const;
+    SemaphoreWrapper    CreateTimelineSemaphore(uint64_t InitialValue, const char* DebugName = "") const;
     QueryPoolWrapper    CreateQueryPool(const VkQueryPoolCreateInfo& QueryPoolCI, const char* DebugName = "") const;
     AccelStructWrapper  CreateAccelStruct(const VkAccelerationStructureCreateInfoKHR& CI, const char* DebugName = "") const;
 
@@ -171,6 +173,7 @@ public:
     void ReleaseVulkanObject(AccelStructWrapper&&   AccelStruct) const;
 
     void FreeDescriptorSet(VkDescriptorPool Pool, VkDescriptorSet Set) const;
+    void FreeCommandBuffer(VkCommandPool Pool, VkCommandBuffer CmdBuffer) const;
 
     VkMemoryRequirements GetBufferMemoryRequirements(VkBuffer vkBuffer) const;
     VkMemoryRequirements GetImageMemoryRequirements (VkImage  vkImage ) const;
@@ -192,6 +195,10 @@ public:
                            const VkFence* pFences,
                            VkBool32       waitAll,
                            uint64_t       timeout) const;
+
+    VkResult GetSemaphoreCounter(VkSemaphore TimelineSemaphore, uint64_t* pSemaphoreValue) const;
+    VkResult SignalSemaphore(const VkSemaphoreSignalInfo& SignalInfo) const;
+    VkResult WaitSemaphores(const VkSemaphoreWaitInfo& WaitInfo, uint64_t Timeout) const;
 
     void UpdateDescriptorSets(uint32_t                    descriptorWriteCount,
                               const VkWriteDescriptorSet* pDescriptorWrites,
@@ -216,11 +223,16 @@ public:
                                      dataSize, pData, stride, flags);
     }
 
+    void ResetQueryPool(VkQueryPool queryPool,
+                        uint32_t    firstQuery,
+                        uint32_t    queryCount) const;
+
     void GetAccelerationStructureBuildSizes(const VkAccelerationStructureBuildGeometryInfoKHR& BuildInfo, const uint32_t* pMaxPrimitiveCounts, VkAccelerationStructureBuildSizesInfoKHR& SizeInfo) const;
 
     VkResult GetRayTracingShaderGroupHandles(VkPipeline pipeline, uint32_t firstGroup, uint32_t groupCount, size_t dataSize, void* pData) const;
 
-    VkPipelineStageFlags GetEnabledShaderStages() const { return m_EnabledShaderStages; }
+    VkPipelineStageFlags GetSupportedStagesMask(HardwareQueueIndex QueueFamilyIndex) const { return m_SupportedStagesMask[QueueFamilyIndex]; }
+    VkAccessFlags        GetSupportedAccessMask(HardwareQueueIndex QueueFamilyIndex) const { return m_SupportedAccessMask[QueueFamilyIndex]; }
 
     const VkPhysicalDeviceFeatures& GetEnabledFeatures() const { return m_EnabledFeatures; }
     const ExtensionFeatures&        GetEnabledExtFeatures() const { return m_EnabledExtFeatures; }
@@ -242,11 +254,10 @@ private:
 
     VkDevice                           m_VkDevice = VK_NULL_HANDLE;
     const VkAllocationCallbacks* const m_VkAllocator;
-    VkPipelineStageFlags               m_EnabledShaderStages = 0;
     const VkPhysicalDeviceFeatures     m_EnabledFeatures;
     ExtensionFeatures                  m_EnabledExtFeatures = {};
+    std::vector<VkPipelineStageFlags>  m_SupportedStagesMask;
+    std::vector<VkAccessFlags>         m_SupportedAccessMask;
 };
-
-void EnableRayTracingKHRviaNV();
 
 } // namespace VulkanUtilities

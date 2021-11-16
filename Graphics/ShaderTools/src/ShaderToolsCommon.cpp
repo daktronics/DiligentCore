@@ -1,27 +1,27 @@
 /*
  *  Copyright 2019-2021 Diligent Graphics LLC
  *  Copyright 2015-2019 Egor Yusov
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  In no event and under no legal theory, whether in tort (including negligence), 
- *  contract, or otherwise, unless required by applicable law (such as deliberate 
+ *  In no event and under no legal theory, whether in tort (including negligence),
+ *  contract, or otherwise, unless required by applicable law (such as deliberate
  *  and grossly negligent acts) or agreed to in writing, shall any Contributor be
- *  liable for any damages, including any direct, indirect, special, incidental, 
- *  or consequential damages of any character arising as a result of this License or 
- *  out of the use or inability to use the software (including but not limited to damages 
- *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and 
- *  all other commercial damages or losses), even if such Contributor has been advised 
+ *  liable for any damages, including any direct, indirect, special, incidental,
+ *  or consequential damages of any character arising as a result of this License or
+ *  out of the use or inability to use the software (including but not limited to damages
+ *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and
+ *  all other commercial damages or losses), even if such Contributor has been advised
  *  of the possibility of such damages.
  */
 
@@ -54,7 +54,7 @@ const ShaderMacro RCMacros[]  = {{"RAY_CALLABLE_SHADER", "1"}, {}};
 
 const ShaderMacro* GetShaderTypeMacros(SHADER_TYPE Type)
 {
-    static_assert(SHADER_TYPE_LAST == SHADER_TYPE_CALLABLE, "Please update the switch below to handle the new shader type");
+    static_assert(SHADER_TYPE_LAST == 0x4000, "Please update the switch below to handle the new shader type");
     switch (Type)
     {
         // clang-format off
@@ -73,6 +73,9 @@ const ShaderMacro* GetShaderTypeMacros(SHADER_TYPE Type)
         case SHADER_TYPE_RAY_INTERSECTION: return RIMacros;
         case SHADER_TYPE_CALLABLE:         return RCMacros;
         // clang-format on
+        case SHADER_TYPE_TILE:
+            UNEXPECTED("Unsupported shader type");
+            return nullptr;
         default:
             UNEXPECTED("Unexpected shader type");
             return nullptr;
@@ -106,11 +109,11 @@ const char* ReadShaderSourceFile(const char*                      SourceCode,
                                  RefCntAutoPtr<IDataBlob>&        pFileData,
                                  size_t&                          SourceCodeLen) noexcept(false)
 {
-    SourceCodeLen = 0;
     if (SourceCode != nullptr)
     {
         VERIFY(FilePath == nullptr, "FilePath must be null when SourceCode is not null");
-        SourceCodeLen = strlen(SourceCode);
+        if (SourceCodeLen == 0)
+            SourceCodeLen = strlen(SourceCode);
     }
     else
     {
@@ -144,9 +147,11 @@ const char* ReadShaderSourceFile(const char*                      SourceCode,
 
 void AppendShaderSourceCode(std::string& Source, const ShaderCreateInfo& ShaderCI) noexcept(false)
 {
+    VERIFY_EXPR(ShaderCI.ByteCode == nullptr);
+
     RefCntAutoPtr<IDataBlob> pFileData;
 
-    size_t SourceCodeLen = 0;
+    size_t SourceCodeLen = ShaderCI.SourceLength;
 
     const auto* SourceCode =
         ReadShaderSourceFile(ShaderCI.Source, ShaderCI.pShaderSourceStreamFactory,

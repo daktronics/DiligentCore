@@ -1,32 +1,33 @@
 /*
  *  Copyright 2019-2021 Diligent Graphics LLC
  *  Copyright 2015-2019 Egor Yusov
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  In no event and under no legal theory, whether in tort (including negligence), 
- *  contract, or otherwise, unless required by applicable law (such as deliberate 
+ *  In no event and under no legal theory, whether in tort (including negligence),
+ *  contract, or otherwise, unless required by applicable law (such as deliberate
  *  and grossly negligent acts) or agreed to in writing, shall any Contributor be
- *  liable for any damages, including any direct, indirect, special, incidental, 
- *  or consequential damages of any character arising as a result of this License or 
- *  out of the use or inability to use the software (including but not limited to damages 
- *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and 
- *  all other commercial damages or losses), even if such Contributor has been advised 
+ *  liable for any damages, including any direct, indirect, special, incidental,
+ *  or consequential damages of any character arising as a result of this License or
+ *  out of the use or inability to use the software (including but not limited to damages
+ *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and
+ *  all other commercial damages or losses), even if such Contributor has been advised
  *  of the possibility of such damages.
  */
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 
 #include "GraphicsUtilities.h"
 #include "DebugUtilities.hpp"
@@ -39,7 +40,7 @@ namespace Diligent
 {
 
 void CreateUniformBuffer(IRenderDevice*   pDevice,
-                         Uint32           Size,
+                         Uint64           Size,
                          const Char*      Name,
                          IBuffer**        ppBuffer,
                          USAGE            Usage,
@@ -49,7 +50,7 @@ void CreateUniformBuffer(IRenderDevice*   pDevice,
 {
     BufferDesc CBDesc;
     CBDesc.Name           = Name;
-    CBDesc.uiSizeInBytes  = Size;
+    CBDesc.Size           = Size;
     CBDesc.Usage          = Usage;
     CBDesc.BindFlags      = BindFlags;
     CBDesc.CPUAccessFlags = CPUAccessFlags;
@@ -64,7 +65,7 @@ void CreateUniformBuffer(IRenderDevice*   pDevice,
 }
 
 template <class TConverter>
-void GenerateCheckerBoardPatternInternal(Uint32 Width, Uint32 Height, TEXTURE_FORMAT Fmt, Uint32 HorzCells, Uint32 VertCells, Uint8* pData, Uint32 StrideInBytes, TConverter Converter)
+void GenerateCheckerBoardPatternInternal(Uint32 Width, Uint32 Height, TEXTURE_FORMAT Fmt, Uint32 HorzCells, Uint32 VertCells, Uint8* pData, Uint64 StrideInBytes, TConverter Converter)
 {
     const auto& FmtAttribs = GetTextureFormatAttribs(Fmt);
     for (Uint32 y = 0; y < Height; ++y)
@@ -83,7 +84,7 @@ void GenerateCheckerBoardPatternInternal(Uint32 Width, Uint32 Height, TEXTURE_FO
     }
 }
 
-void GenerateCheckerBoardPattern(Uint32 Width, Uint32 Height, TEXTURE_FORMAT Fmt, Uint32 HorzCells, Uint32 VertCells, Uint8* pData, Uint32 StrideInBytes)
+void GenerateCheckerBoardPattern(Uint32 Width, Uint32 Height, TEXTURE_FORMAT Fmt, Uint32 HorzCells, Uint32 VertCells, Uint8* pData, Uint64 StrideInBytes)
 {
     const auto& FmtAttribs = GetTextureFormatAttribs(Fmt);
     switch (FmtAttribs.ComponentType)
@@ -206,10 +207,10 @@ struct ComputeCoarseMipHelper
     const Uint32 FineMipHeight;
 
     const void* const pFineMip;
-    const Uint32      FineMipStride;
+    const Uint64      FineMipStride;
 
     void* const  pCoarseMip;
-    const Uint32 CoarseMipStride;
+    const Uint64 CoarseMipStride;
 
     const Uint32 NumChannels;
 
@@ -258,9 +259,9 @@ void ComputeMipLevel(Uint32         FineLevelWidth,
                      Uint32         FineLevelHeight,
                      TEXTURE_FORMAT Fmt,
                      const void*    pFineLevelData,
-                     Uint32         FineDataStrideInBytes,
+                     Uint64         FineDataStrideInBytes,
                      void*          pCoarseLevelData,
-                     Uint32         CoarseDataStrideInBytes)
+                     Uint64         CoarseDataStrideInBytes)
 {
     const auto& FmtAttribs = GetTextureFormatAttribs(Fmt);
 
@@ -340,7 +341,7 @@ void ComputeMipLevel(Uint32         FineLevelWidth,
 extern "C"
 {
     void Diligent_CreateUniformBuffer(Diligent::IRenderDevice*   pDevice,
-                                      Diligent::Uint32           Size,
+                                      Diligent::Uint64           Size,
                                       const Diligent::Char*      Name,
                                       Diligent::IBuffer**        ppBuffer,
                                       Diligent::USAGE            Usage,
@@ -357,7 +358,7 @@ extern "C"
                                               Diligent::Uint32         HorzCells,
                                               Diligent::Uint32         VertCells,
                                               Diligent::Uint8*         pData,
-                                              Diligent::Uint32         StrideInBytes)
+                                              Diligent::Uint64         StrideInBytes)
     {
         Diligent::GenerateCheckerBoardPattern(Width, Height, Fmt, HorzCells, VertCells, pData, StrideInBytes);
     }
@@ -366,9 +367,9 @@ extern "C"
                                   Diligent::Uint32         FineLevelHeight,
                                   Diligent::TEXTURE_FORMAT Fmt,
                                   const void*              pFineLevelData,
-                                  Diligent::Uint32         FineDataStrideInBytes,
+                                  Diligent::Uint64         FineDataStrideInBytes,
                                   void*                    pCoarseLevelData,
-                                  Diligent::Uint32         CoarseDataStrideInBytes)
+                                  Diligent::Uint64         CoarseDataStrideInBytes)
     {
         ComputeMipLevel(FineLevelWidth, FineLevelHeight, Fmt, pFineLevelData,
                         FineDataStrideInBytes, pCoarseLevelData, CoarseDataStrideInBytes);

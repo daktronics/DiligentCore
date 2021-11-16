@@ -1,27 +1,27 @@
 /*
  *  Copyright 2019-2021 Diligent Graphics LLC
  *  Copyright 2015-2019 Egor Yusov
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  In no event and under no legal theory, whether in tort (including negligence), 
- *  contract, or otherwise, unless required by applicable law (such as deliberate 
+ *  In no event and under no legal theory, whether in tort (including negligence),
+ *  contract, or otherwise, unless required by applicable law (such as deliberate
  *  and grossly negligent acts) or agreed to in writing, shall any Contributor be
- *  liable for any damages, including any direct, indirect, special, incidental, 
- *  or consequential damages of any character arising as a result of this License or 
- *  out of the use or inability to use the software (including but not limited to damages 
- *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and 
- *  all other commercial damages or losses), even if such Contributor has been advised 
+ *  liable for any damages, including any direct, indirect, special, incidental,
+ *  or consequential damages of any character arising as a result of this License or
+ *  out of the use or inability to use the software (including but not limited to damages
+ *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and
+ *  all other commercial damages or losses), even if such Contributor has been advised
  *  of the possibility of such damages.
  */
 
@@ -42,7 +42,7 @@ namespace
 TEST(Common_FixedBlockMemoryAllocator, AllocDealloc)
 {
     constexpr Uint32 AllocSize             = 32;
-    constexpr Uint32 NumAllocationsPerPage = 16;
+    constexpr int    NumAllocationsPerPage = 16;
 
     FixedBlockMemoryAllocator TestAllocator(DefaultRawMemoryAllocator::GetAllocator(), AllocSize, NumAllocationsPerPage);
 
@@ -140,7 +140,7 @@ TEST(Common_FixedLinearAllocator, LargeAlignment)
     Allocator.AddSpace(32, 8192);
     Allocator.Reserve();
     auto* Ptr = Allocator.Allocate(32, 8192);
-    EXPECT_EQ(Ptr, Align(Ptr, 8192));
+    EXPECT_EQ(Ptr, AlignUp(Ptr, 8192));
 }
 
 TEST(Common_FixedLinearAllocator, ObjectConstruction)
@@ -174,13 +174,13 @@ TEST(Common_FixedLinearAllocator, ObjectConstruction)
 
     {
         auto* pUI8 = Allocator.Construct<uint8_t>(uint8_t{15});
-        EXPECT_EQ(pUI8, Align(pUI8, alignof(uint8_t)));
+        EXPECT_EQ(pUI8, AlignUp(pUI8, alignof(uint8_t)));
         EXPECT_EQ(*pUI8, uint8_t{15});
     }
 
     {
         auto* pUI16 = Allocator.Copy(uint16_t{31});
-        EXPECT_EQ(pUI16, Align(pUI16, alignof(uint16_t)));
+        EXPECT_EQ(pUI16, AlignUp(pUI16, alignof(uint16_t)));
         EXPECT_EQ(*pUI16, uint16_t{31});
     }
 
@@ -196,7 +196,7 @@ TEST(Common_FixedLinearAllocator, ObjectConstruction)
 
     {
         auto* pUI32 = Allocator.ConstructArray<uint32_t>(5, 100u);
-        EXPECT_EQ(pUI32, Align(pUI32, alignof(uint32_t)));
+        EXPECT_EQ(pUI32, AlignUp(pUI32, alignof(uint32_t)));
         for (size_t i = 0; i < 5; ++i)
             EXPECT_EQ(pUI32[i], 100u);
     }
@@ -205,7 +205,7 @@ TEST(Common_FixedLinearAllocator, ObjectConstruction)
         std::array<uint64_t, 3> RefArray = {11, 120, 1300};
 
         auto* pUI64 = Allocator.CopyArray<uint64_t>(RefArray.data(), RefArray.size());
-        EXPECT_EQ(pUI64, Align(pUI64, alignof(uint64_t)));
+        EXPECT_EQ(pUI64, AlignUp(pUI64, alignof(uint64_t)));
         for (size_t i = 0; i < RefArray.size(); ++i)
             EXPECT_EQ(pUI64[i], RefArray[i]);
     }
@@ -217,7 +217,7 @@ TEST(Common_FixedLinearAllocator, ObjectConstruction)
 
     {
         auto* pObj = Allocator.Allocate<TObj1k>(4);
-        EXPECT_EQ(pObj, Align(pObj, alignof(TObj1k)));
+        EXPECT_EQ(pObj, AlignUp(pObj, alignof(TObj1k)));
     }
 }
 

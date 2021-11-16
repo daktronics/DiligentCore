@@ -8,8 +8,6 @@ SamplerState g_SamArr_Static[STATIC_SAM_ARRAY_SIZE];  // 2
 SamplerState g_SamArr_Mut   [MUTABLE_SAM_ARRAY_SIZE]; // 4
 SamplerState g_SamArr_Dyn   [DYNAMIC_SAM_ARRAY_SIZE]; // 3
 
-SamplerState g_Sampler;
-
 #define TexRefValue float4(1.0, 0.0, 1.0, 0.0)
 
 float4 CheckValue(float4 Val, float4 Expected)
@@ -60,7 +58,7 @@ void VSMain(in  uint    VertId    : SV_VertexID,
     Pos[4] = float4(+0.5, +0.5, 0.0, 1.0);
     Pos[5] = float4(+1.0, -0.5, 0.0, 1.0);
 
-    f4Color = float4(VertId % 3 == 0 ? 1.0 : 0.0, 
+    f4Color = float4(VertId % 3 == 0 ? 1.0 : 0.0,
                      VertId % 3 == 1 ? 1.0 : 0.0,
                      VertId % 3 == 2 ? 1.0 : 0.0,
                      1.0) * VerifyResources();

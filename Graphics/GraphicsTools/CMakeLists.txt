@@ -6,6 +6,7 @@ set(INTERFACE
     interface/BufferSuballocator.h
     interface/CommonlyUsedStates.h
     interface/DynamicBuffer.hpp
+    interface/DynamicTextureArray.hpp
     interface/DynamicTextureAtlas.h
     interface/DurationQueryHelper.hpp
     interface/GraphicsUtilities.h
@@ -18,10 +19,11 @@ set(INTERFACE
     interface/TextureUploaderBase.hpp
 )
 
-set(SOURCE 
+set(SOURCE
     src/BufferSuballocator.cpp
     src/DurationQueryHelper.cpp
     src/DynamicBuffer.cpp
+    src/DynamicTextureArray.cpp
     src/DynamicTextureAtlas.cpp
     src/GraphicsUtilities.cpp
     src/ScopedQueryHelper.cpp
@@ -60,9 +62,9 @@ PRIVATE
     ../GraphicsEngineD3DBase/include
 )
 
-target_link_libraries(Diligent-GraphicsTools 
-PRIVATE 
-    Diligent-Common 
+target_link_libraries(Diligent-GraphicsTools
+PRIVATE
+    Diligent-Common
     Diligent-BuildSettings
     Diligent-PlatformInterface
     Diligent-GraphicsAccessories
@@ -72,8 +74,8 @@ PUBLIC
 )
 
 if(D3D11_SUPPORTED OR D3D12_SUPPORTED)
-    target_link_libraries(Diligent-GraphicsTools 
-    PRIVATE 
+    target_link_libraries(Diligent-GraphicsTools
+    PRIVATE
         Diligent-GraphicsEngineD3DBase
     )
 endif()

@@ -1,27 +1,27 @@
 /*
  *  Copyright 2019-2021 Diligent Graphics LLC
  *  Copyright 2015-2019 Egor Yusov
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  In no event and under no legal theory, whether in tort (including negligence), 
- *  contract, or otherwise, unless required by applicable law (such as deliberate 
+ *  In no event and under no legal theory, whether in tort (including negligence),
+ *  contract, or otherwise, unless required by applicable law (such as deliberate
  *  and grossly negligent acts) or agreed to in writing, shall any Contributor be
- *  liable for any damages, including any direct, indirect, special, incidental, 
- *  or consequential damages of any character arising as a result of this License or 
- *  out of the use or inability to use the software (including but not limited to damages 
- *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and 
- *  all other commercial damages or losses), even if such Contributor has been advised 
+ *  liable for any damages, including any direct, indirect, special, incidental,
+ *  or consequential damages of any character arising as a result of this License or
+ *  out of the use or inability to use the software (including but not limited to damages
+ *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and
+ *  all other commercial damages or losses), even if such Contributor has been advised
  *  of the possibility of such damages.
  */
 
@@ -29,7 +29,6 @@
 
 #include "ShaderD3D11Impl.hpp"
 #include "RenderDeviceD3D11Impl.hpp"
-#include "ResourceMapping.h"
 
 namespace Diligent
 {
@@ -37,7 +36,7 @@ namespace Diligent
 static const ShaderVersion HLSLValidateShaderVersion(const ShaderVersion& Version, const ShaderVersion& MaxVersion)
 {
     ShaderVersion ModelVer;
-    if (Version.Major > MaxVersion.Major || (Version.Major == MaxVersion.Major && Version.Minor > MaxVersion.Minor))
+    if (Version > MaxVersion)
     {
         ModelVer = MaxVersion;
         LOG_ERROR_MESSAGE("Shader model ", Uint32{Version.Major}, "_", Uint32{Version.Minor},
@@ -65,17 +64,17 @@ static const ShaderVersion GetD3D11ShaderModel(ID3D11Device* pd3d11Device, const
 #endif
         case D3D_FEATURE_LEVEL_11_1:
         case D3D_FEATURE_LEVEL_11_0:
-            return (HLSLVersion.Major == 0 && HLSLVersion.Minor == 0) ?
+            return (HLSLVersion == ShaderVersion{0, 0}) ?
                 ShaderVersion{5, 0} :
                 HLSLValidateShaderVersion(HLSLVersion, {5, 0});
 
         case D3D_FEATURE_LEVEL_10_1:
-            return (HLSLVersion.Major == 0 && HLSLVersion.Minor == 0) ?
+            return (HLSLVersion == ShaderVersion{0, 0}) ?
                 ShaderVersion{4, 1} :
                 HLSLValidateShaderVersion(HLSLVersion, {4, 1});
 
         case D3D_FEATURE_LEVEL_10_0:
-            return (HLSLVersion.Major == 0 && HLSLVersion.Minor == 0) ?
+            return (HLSLVersion == ShaderVersion{0, 0}) ?
                 ShaderVersion{4, 0} :
                 HLSLValidateShaderVersion(HLSLVersion, {4, 0});
 
@@ -98,52 +97,14 @@ ShaderD3D11Impl::ShaderD3D11Impl(IReferenceCounters*     pRefCounters,
     ShaderD3DBase{ShaderCI, GetD3D11ShaderModel(pRenderDeviceD3D11->GetD3D11Device(), ShaderCI.HLSLVersion), nullptr}
 // clang-format on
 {
-    auto* pDeviceD3D11 = pRenderDeviceD3D11->GetD3D11Device();
-    switch (ShaderCI.Desc.ShaderType)
-    {
-
-#define CREATE_SHADER(SHADER_NAME, ShaderName)                                                                                                                                \
-    case SHADER_TYPE_##SHADER_NAME:                                                                                                                                           \
-    {                                                                                                                                                                         \
-        ID3D11##ShaderName##Shader* pShader;                                                                                                                                  \
-        HRESULT                     hr = pDeviceD3D11->Create##ShaderName##Shader(m_pShaderByteCode->GetBufferPointer(), m_pShaderByteCode->GetBufferSize(), NULL, &pShader); \
-        CHECK_D3D_RESULT_THROW(hr, "Failed to create D3D11 shader");                                                                                                          \
-        if (SUCCEEDED(hr))                                                                                                                                                    \
-        {                                                                                                                                                                     \
-            pShader->QueryInterface(__uuidof(ID3D11DeviceChild), reinterpret_cast<void**>(static_cast<ID3D11DeviceChild**>(&m_pShader)));                                     \
-            pShader->Release();                                                                                                                                               \
-        }                                                                                                                                                                     \
-        break;                                                                                                                                                                \
-    }
-
-        CREATE_SHADER(VERTEX, Vertex)
-        CREATE_SHADER(PIXEL, Pixel)
-        CREATE_SHADER(GEOMETRY, Geometry)
-        CREATE_SHADER(DOMAIN, Domain)
-        CREATE_SHADER(HULL, Hull)
-        CREATE_SHADER(COMPUTE, Compute)
-
-        default: UNEXPECTED("Unknown shader type");
-    }
-
-    if (!m_pShader)
-        LOG_ERROR_AND_THROW("Failed to create the shader from the byte code");
-
-    if (*m_Desc.Name != 0)
-    {
-        auto hr = m_pShader->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(strlen(m_Desc.Name)), m_Desc.Name);
-        DEV_CHECK_ERR(SUCCEEDED(hr), "Failed to set shader name");
-    }
-
     // Load shader resources
     auto& Allocator  = GetRawAllocator();
     auto* pRawMem    = ALLOCATE(Allocator, "Allocator for ShaderResources", ShaderResourcesD3D11, 1);
     auto* pResources = new (pRawMem) ShaderResourcesD3D11(pRenderDeviceD3D11, m_pShaderByteCode, m_Desc, ShaderCI.UseCombinedTextureSamplers ? ShaderCI.CombinedSamplerSuffix : nullptr);
     m_pShaderResources.reset(pResources, STDDeleterRawMem<ShaderResourcesD3D11>(Allocator));
 
-    // Byte code is only required for the vertex shader to create input layout
-    if (ShaderCI.Desc.ShaderType != SHADER_TYPE_VERTEX)
-        m_pShaderByteCode.Release();
+    // Add shader to the cache
+    GetD3D11Shader(m_pShaderByteCode);
 }
 
 ShaderD3D11Impl::~ShaderD3D11Impl()
@@ -163,6 +124,62 @@ void ShaderD3D11Impl::QueryInterface(const INTERFACE_ID& IID, IObject** ppInterf
     {
         TShaderBase::QueryInterface(IID, ppInterface);
     }
+}
+
+ID3D11DeviceChild* ShaderD3D11Impl::GetD3D11Shader(ID3DBlob* pBlob) noexcept(false)
+{
+    std::lock_guard<std::mutex> Lock{m_d3dShaderCacheMtx};
+
+    BlobHashKey BlobKey{pBlob};
+
+    auto it = m_d3dShaderCache.find(BlobKey);
+    if (it != m_d3dShaderCache.end())
+    {
+        return it->second;
+    }
+
+    VERIFY(pBlob->GetBufferSize() == m_pShaderByteCode->GetBufferSize(), "The byte code size does not match the size of original byte code");
+
+    auto* pd3d11Device = m_pDevice->GetD3D11Device();
+
+    CComPtr<ID3D11DeviceChild> pd3d11Shader;
+    switch (m_Desc.ShaderType)
+    {
+#define CREATE_SHADER(SHADER_NAME, ShaderName)                                                                                                        \
+    case SHADER_TYPE_##SHADER_NAME:                                                                                                                   \
+    {                                                                                                                                                 \
+        CComPtr<ID3D11##ShaderName##Shader> pd3d11SpecificShader;                                                                                     \
+                                                                                                                                                      \
+        HRESULT hr = pd3d11Device->Create##ShaderName##Shader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(),                                      \
+                                                              NULL, &pd3d11SpecificShader);                                                           \
+        CHECK_D3D_RESULT_THROW(hr, "Failed to create D3D11 shader");                                                                                  \
+        pd3d11SpecificShader->QueryInterface(__uuidof(ID3D11DeviceChild), reinterpret_cast<void**>(static_cast<ID3D11DeviceChild**>(&pd3d11Shader))); \
+        break;                                                                                                                                        \
+    }
+
+        // clang-format off
+        CREATE_SHADER(VERTEX,   Vertex)
+        CREATE_SHADER(PIXEL,    Pixel)
+        CREATE_SHADER(GEOMETRY, Geometry)
+        CREATE_SHADER(DOMAIN,   Domain)
+        CREATE_SHADER(HULL,     Hull)
+        CREATE_SHADER(COMPUTE,  Compute)
+        // clang-format on
+#undef CREATE_SHADER
+
+        default: UNEXPECTED("Unexpected shader type");
+    }
+
+    if (!pd3d11Shader)
+        LOG_ERROR_AND_THROW("Failed to create shader from the byte code");
+
+    if (*m_Desc.Name != 0)
+    {
+        auto hr = pd3d11Shader->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(strlen(m_Desc.Name)), m_Desc.Name);
+        DEV_CHECK_ERR(SUCCEEDED(hr), "Failed to set shader name");
+    }
+
+    return m_d3dShaderCache.emplace(BlobKey, std::move(pd3d11Shader)).first->second;
 }
 
 } // namespace Diligent
