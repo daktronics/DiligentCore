@@ -432,6 +432,7 @@ add_subdirectory(Tests)
 
 # Installation instructions
 if(DILIGENT_INSTALL_CORE)
+    install_core_lib(Diligent-PublicBuildSettings)
     install_core_lib(Diligent-BuildSettings)
 
     install_combined_static_lib(
