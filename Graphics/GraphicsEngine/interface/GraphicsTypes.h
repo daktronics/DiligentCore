@@ -893,6 +893,12 @@ DILIGENT_TYPED_ENUM(TEXTURE_FORMAT, Uint16)
     ///     <a href = "https://www.opengl.org/wiki/BPTC_Texture_Compression">BPTC Texture Compression on OpenGL.org </a>
     TEX_FORMAT_BC7_UNORM_SRGB,
 
+    TEX_FORMAT_AYUV,
+    TEX_FORMAT_Y410,
+    TEX_FORMAT_Y416,
+    TEX_FORMAT_NV12,
+    TEX_FORMAT_P010,
+
     /// Helper member containing the total number of texture formats in the enumeration
     TEX_FORMAT_NUM_FORMATS
 };
