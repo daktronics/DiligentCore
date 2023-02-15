@@ -115,11 +115,14 @@ static HRESULT CompileShader(const char*             Source,
     for (auto CompileFlags = ShaderCI.CompileFlags; CompileFlags != SHADER_COMPILE_FLAG_NONE;)
     {
         auto Flag = ExtractLSB(CompileFlags);
-        static_assert(SHADER_COMPILE_FLAG_LAST == 2, "Please updated the switch below to handle the new shader flag");
+        static_assert(SHADER_COMPILE_FLAG_LAST == 4, "Please updated the switch below to handle the new shader flag");
         switch (Flag)
         {
             case SHADER_COMPILE_FLAG_ENABLE_UNBOUNDED_ARRAYS:
                 dwShaderFlags |= D3DCOMPILE_ENABLE_UNBOUNDED_DESCRIPTOR_TABLES;
+                break;
+            case SHADER_COMPILE_FLAG_SKIP_OPTIMIZATION:
+                dwShaderFlags |= D3DCOMPILE_SKIP_OPTIMIZATION;
                 break;
 
             default:
