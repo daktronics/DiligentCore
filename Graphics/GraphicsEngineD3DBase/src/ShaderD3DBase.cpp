@@ -119,6 +119,9 @@ HRESULT CompileShader(const char*             Source,
     if (ShaderCI.CompileFlags & SHADER_COMPILE_FLAG_ENABLE_UNBOUNDED_ARRAYS)
         dwShaderFlags |= D3DCOMPILE_ENABLE_UNBOUNDED_DESCRIPTOR_TABLES;
 
+    if (ShaderCI.CompileFlags & SHADER_COMPILE_FLAG_SKIP_OPTIMIZATION)
+        dwShaderFlags |= D3DCOMPILE_SKIP_OPTIMIZATION;
+
     if (ShaderCI.CompileFlags & SHADER_COMPILE_FLAG_PACK_MATRIX_ROW_MAJOR)
         dwShaderFlags |= D3DCOMPILE_PACK_MATRIX_ROW_MAJOR;
 
