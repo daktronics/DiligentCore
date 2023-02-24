@@ -197,7 +197,3 @@ if(DILIGENT_INSTALL_CORE)
     install_core_lib(Diligent-Archiver-static)
     install_core_lib(Diligent-ArchiverInterface)
 endif()
-
-if ((${DILIGENT_USE_VCPKG}))
-    install_core_lib_and_export(Diligent-ArchiverInterface)
-endif()
