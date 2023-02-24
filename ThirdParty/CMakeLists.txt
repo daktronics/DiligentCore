@@ -23,11 +23,17 @@ if (VULKAN_SUPPORTED)
         # Manually add the Vulkan-Headers target as this is all we need and the
         # project's CMake creates unnecessary targets
         add_library(Vulkan-Headers INTERFACE)
+        get_target_relative_dir(Vulkan-Headers TARGET_RELATIVE_PATH)
         # Vulkan-Headers_SOURCE_DIR variable is normally created by project(Vulkan-Headers)
         set(Vulkan-Headers_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Vulkan-Headers")
         add_library(Vulkan::Headers ALIAS Vulkan-Headers)
-        target_include_directories(Vulkan-Headers INTERFACE "${Vulkan-Headers_SOURCE_DIR}/include")
-        install(FILES "${Vulkan-Headers_SOURCE_DIR}/LICENSE.md" DESTINATION "Licenses/ThirdParty/${DILIGENT_CORE_DIR}" RENAME Vulkan-Headers-License.md)
+        target_include_directories(Vulkan-Headers
+        INTERFACE
+            $<BUILD_INTERFACE:${Vulkan-Headers_SOURCE_DIR}/include>
+            $<INSTALL_INTERFACE:include/${TARGET_RELATIVE_PATH}/Vulkan-Headers>
+        )
+        install(FILES "${Vulkan-Headers_SOURCE_DIR}/LICENSE.txt" DESTINATION "Licenses/ThirdParty/${DILIGENT_CORE_DIR}" RENAME Vulkan-Headers-License.txt)
+        install_core_lib(Vulkan-Headers)
     endif()
 endif()
 
