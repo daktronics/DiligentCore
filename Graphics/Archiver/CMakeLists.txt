@@ -54,8 +54,14 @@ set(DLL_SOURCE
 )
 
 add_library(Diligent-ArchiverInterface INTERFACE)
+get_target_relative_dir(Diligent-ArchiverInterface TARGET_RELATIVE_PATH)
 target_link_libraries     (Diligent-ArchiverInterface INTERFACE Diligent-GraphicsEngineInterface)
-target_include_directories(Diligent-ArchiverInterface INTERFACE interface)
+target_include_directories(Diligent-ArchiverInterface
+INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface>
+    $<INSTALL_INTERFACE:include/${TARGET_RELATIVE_PATH}/interface>
+)
+
 target_compile_definitions(Diligent-ArchiverInterface INTERFACE ARCHIVER_SUPPORTED=1)
 
 add_library(Diligent-Archiver-static STATIC
