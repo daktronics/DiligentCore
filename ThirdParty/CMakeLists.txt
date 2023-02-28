@@ -88,6 +88,12 @@ if (VULKAN_SUPPORTED OR METAL_SUPPORTED)
 
         list(APPEND THIRD_PARTY_LIBS GenericCodeGen glslang OGLCompiler OSDependent SPIRV HLSL MachineIndependent)
         install(FILES "${glslang_SOURCE_DIR}/LICENSE.txt" DESTINATION "Licenses/ThirdParty/${DILIGENT_CORE_DIR}" RENAME GLSLang-License.txt)
+        install(
+            FILES
+                "${CMAKE_CURRENT_BINARY_DIR}/glslang/glslang-config.cmake"
+                "${CMAKE_CURRENT_BINARY_DIR}/glslang/glslang-config-version.cmake"
+            DESTINATION
+                ${CMAKE_INSTALL_LIBDIR}/cmake)
     endif()
 
     if (NOT TARGET spirv-cross-core)
