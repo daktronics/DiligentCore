@@ -177,6 +177,14 @@ if (NOT TARGET xxHash::xxhash)
     add_subdirectory(xxHash/cmake_unofficial)
     set_directory_root_folder("xxHash/cmake_unofficial" "DiligentCore/ThirdParty/xxHash")
     install(FILES "${xxHash_SOURCE_DIR}/../LICENSE" DESTINATION "Licenses/ThirdParty/${DILIGENT_CORE_DIR}" RENAME xxHash-License.txt)
+    install(
+        FILES
+            "${CMAKE_CURRENT_BINARY_DIR}/xxHash/cmake_unofficial/xxHashConfig.cmake"
+            "${CMAKE_CURRENT_BINARY_DIR}/xxHash/cmake_unofficial/xxHashConfigVersion.cmake"
+            "${CMAKE_CURRENT_BINARY_DIR}/xxHash/cmake_unofficial/xxHashTargets.cmake"
+        DESTINATION
+            ${CMAKE_INSTALL_LIBDIR}/cmake
+    )
 endif()
 
 install(FILES stb/stb_image_write_license.txt DESTINATION "Licenses/ThirdParty/${DILIGENT_CORE_DIR}")
