@@ -42,7 +42,7 @@ if (VULKAN_SUPPORTED OR METAL_SUPPORTED)
             $<BUILD_INTERFACE:${Vulkan-Headers_SOURCE_DIR}/include>
             $<INSTALL_INTERFACE:include/${TARGET_RELATIVE_PATH}/Vulkan-Headers>
         )
-        install(FILES "${Vulkan-Headers_SOURCE_DIR}/LICENSE.txt" DESTINATION "Licenses/ThirdParty/${DILIGENT_CORE_DIR}" RENAME Vulkan-Headers-License.txt)
+        install(FILES "${Vulkan-Headers_SOURCE_DIR}/LICENSE.md" DESTINATION "Licenses/ThirdParty/${DILIGENT_CORE_DIR}" RENAME Vulkan-Headers-License.md)
         install_core_lib(Vulkan-Headers)
     endif()
 

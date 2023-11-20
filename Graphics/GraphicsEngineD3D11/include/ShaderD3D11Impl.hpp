@@ -1,5 +1,5 @@
 /*
- *  Copyright 2019-2022 Diligent Graphics LLC
+ *  Copyright 2019-2023 Diligent Graphics LLC
  *  Copyright 2015-2019 Egor Yusov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -59,6 +59,7 @@ public:
         const RenderDeviceInfo&    DeviceInfo;
         const GraphicsAdapterInfo& AdapterInfo;
         const D3D_FEATURE_LEVEL    FeatureLevel;
+        IDataBlob** const          ppCompilerOutput;
     };
     ShaderD3D11Impl(IReferenceCounters*          pRefCounters,
                     class RenderDeviceD3D11Impl* pRenderDeviceD3D11,
@@ -80,6 +81,15 @@ public:
     {
         if (m_pShaderResources)
             ResourceDesc = m_pShaderResources->GetHLSLShaderResourceDesc(Index);
+    }
+
+    /// Implementation of IShader::GetConstantBufferDesc() in Direct3D11 backend.
+    virtual const ShaderCodeBufferDesc* DILIGENT_CALL_TYPE GetConstantBufferDesc(Uint32 Index) const override final
+    {
+        return m_pShaderResources ?
+            // Constant buffers always go first in the list of resources
+            m_pShaderResources->GetConstantBufferDesc(Index) :
+            nullptr;
     }
 
     /// Implementation of IShaderD3D::GetHLSLResource() method.

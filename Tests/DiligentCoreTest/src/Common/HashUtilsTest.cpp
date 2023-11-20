@@ -1,5 +1,5 @@
 /*
- *  Copyright 2019-2022 Diligent Graphics LLC
+ *  Copyright 2019-2023 Diligent Graphics LLC
  *  Copyright 2015-2019 Egor Yusov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -541,7 +541,7 @@ TEST(Common_HashUtils, BlendStateDescXXH128Hash)
 template <template <typename T> class HelperType>
 void TestTextureViewDescHasher()
 {
-    ASSERT_SIZEOF64(TextureViewDesc, 32, "Did you add new members to TextureViewDesc? Please update the tests.");
+    ASSERT_SIZEOF64(TextureViewDesc, 40, "Did you add new members to TextureViewDesc? Please update the tests.");
     DEFINE_HELPER(TextureViewDesc);
 
     TEST_RANGE(ViewType, static_cast<TEXTURE_VIEW_TYPE>(1), TEXTURE_VIEW_NUM_VIEWS);
@@ -553,6 +553,10 @@ void TestTextureViewDescHasher()
     TEST_RANGE(NumArraySlices, 1u, 2048u);
     TEST_FLAGS(AccessFlags, static_cast<UAV_ACCESS_FLAG>(1u), UAV_ACCESS_FLAG_LAST);
     TEST_FLAGS(Flags, static_cast<TEXTURE_VIEW_FLAGS>(1u), TEXTURE_VIEW_FLAG_LAST);
+    TEST_RANGE(Swizzle.R, static_cast<TEXTURE_COMPONENT_SWIZZLE>(1), TEXTURE_COMPONENT_SWIZZLE_COUNT);
+    TEST_RANGE(Swizzle.G, static_cast<TEXTURE_COMPONENT_SWIZZLE>(1), TEXTURE_COMPONENT_SWIZZLE_COUNT);
+    TEST_RANGE(Swizzle.B, static_cast<TEXTURE_COMPONENT_SWIZZLE>(1), TEXTURE_COMPONENT_SWIZZLE_COUNT);
+    TEST_RANGE(Swizzle.A, static_cast<TEXTURE_COMPONENT_SWIZZLE>(1), TEXTURE_COMPONENT_SWIZZLE_COUNT);
 }
 
 TEST(Common_HashUtils, TextureViewDescStdHash)
@@ -1138,7 +1142,7 @@ TEST(Common_HashUtils, VersionXXH128Hash)
 
 TEST(XXH128HasherTest, ShaderCreateInfo)
 {
-    ASSERT_SIZEOF64(ShaderCreateInfo, 144, "Did you add new members to ShaderCreateInfo? Please update the tests.");
+    ASSERT_SIZEOF64(ShaderCreateInfo, 136, "Did you add new members to ShaderCreateInfo? Please update the tests.");
     XXH128HasherTestHelper<ShaderCreateInfo> Helper{"ShaderCreateInfo"};
 
     TEST_STRINGS(Source, "Source1", "Source2", "Source3");
@@ -1160,9 +1164,9 @@ TEST(XXH128HasherTest, ShaderCreateInfo)
         {"Macro1", "Def1"},
         {"Macro2", "Def2"},
         {"Macro3", "Def3"},
-        {},
     };
-    TEST_VALUE(Macros, Macros);
+    Helper.Get().Macros = {Macros, _countof(Macros)};
+
     TEST_BOOL(Desc.UseCombinedTextureSamplers);
 
     TEST_STRINGS(Desc.CombinedSamplerSuffix, "_sampler1", "_sampler2", "_sampler3");
@@ -1328,4 +1332,28 @@ TEST(Common_HashUtils, TilePipelineStateCIXXH128Hash)
     TestTilePipelineStateCIHasher<XXH128HasherTestHelper>();
 }
 
+
+template <template <typename T> class HelperType>
+void TestVertexPoolElementDescHasher()
+{
+    DEFINE_HELPER(VertexPoolElementDesc);
+    Helper.Get().BindFlags = BIND_NONE;
+    Helper.Get().Usage     = static_cast<USAGE>(0);
+
+    TEST_RANGE(Size, 32u, 48000u, 1024u);
+    TEST_FLAGS(BindFlags, static_cast<BIND_FLAGS>(1), BIND_FLAG_LAST);
+    TEST_RANGE(Usage, static_cast<USAGE>(1), USAGE_NUM_USAGES);
+    TEST_RANGE(CPUAccessFlags, static_cast<CPU_ACCESS_FLAGS>(1), CPU_ACCESS_FLAG_LAST);
+    TEST_RANGE(Mode, static_cast<BUFFER_MODE>(1), BUFFER_MODE_NUM_MODES);
+}
+
+TEST(Common_HashUtils, VertexPoolElementDescStdHash)
+{
+    TestVertexPoolElementDescHasher<StdHasherTestHelper>();
+}
+
+TEST(Common_HashUtils, VertexPoolElementDescXXH128Hash)
+{
+    TestVertexPoolElementDescHasher<XXH128HasherTestHelper>();
+}
 } // namespace

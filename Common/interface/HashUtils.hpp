@@ -41,6 +41,8 @@
 #include "../../Graphics/GraphicsEngine/interface/TextureView.h"
 #include "../../Graphics/GraphicsEngine/interface/PipelineResourceSignature.h"
 #include "../../Graphics/GraphicsEngine/interface/PipelineState.h"
+#include "../../Graphics/GraphicsTools/interface/VertexPool.h"
+#include "../../Common/interface/RefCntAutoPtr.hpp"
 #include "Align.hpp"
 
 #define LOG_HASH_CONFLICTS 1
@@ -176,7 +178,7 @@ inline std::size_t ComputeHashRaw(const void* pData, size_t Size) noexcept
     {
         HashCombine(Hash, static_cast<Uint32>(Buffer & ~Uint32{0}));
         Buffer = Buffer >> Uint64{32};
-        Shift -= std::min(Shift, Uint64{32});
+        Shift -= (std::min)(Shift, Uint64{32});
     }
 
     return Hash;
@@ -576,6 +578,7 @@ struct HashCombiner<HasherType, TextureViewDesc> : HashCombinerBase<HasherType>
         ASSERT_SIZEOF(TexViewDesc.Format, 2, "Hash logic below may be incorrect.");
         ASSERT_SIZEOF(TexViewDesc.AccessFlags, 1, "Hash logic below may be incorrect.");
         ASSERT_SIZEOF(TexViewDesc.Flags, 1, "Hash logic below may be incorrect.");
+        ASSERT_SIZEOF(TexViewDesc.Swizzle, 4, "Hash logic below may be incorrect.");
 
         // Ignore Name. This is consistent with the operator==
         this->m_Hasher(
@@ -587,8 +590,9 @@ struct HashCombiner<HasherType, TextureViewDesc> : HashCombinerBase<HasherType>
             TexViewDesc.FirstArraySlice,
             TexViewDesc.NumArraySlices,
             ((static_cast<uint32_t>(TexViewDesc.AccessFlags) << 0u) |
-             (static_cast<uint32_t>(TexViewDesc.Flags) << 8u)));
-        ASSERT_SIZEOF64(TexViewDesc, 32, "Did you add new members to TextureViewDesc? Please handle them here.");
+             (static_cast<uint32_t>(TexViewDesc.Flags) << 8u)),
+            TexViewDesc.Swizzle.AsUint32());
+        ASSERT_SIZEOF64(TexViewDesc, 40, "Did you add new members to TextureViewDesc? Please handle them here.");
     }
 };
 
@@ -1282,6 +1286,28 @@ struct HashCombiner<HasherType, TilePipelineStateCreateInfo> : HashCombinerBase<
     }
 };
 
+template <typename HasherType>
+struct HashCombiner<HasherType, VertexPoolElementDesc> : HashCombinerBase<HasherType>
+{
+    HashCombiner(HasherType& Hasher) :
+        HashCombinerBase<HasherType>{Hasher}
+    {}
+
+    void operator()(const VertexPoolElementDesc& Desc) const
+    {
+        ASSERT_SIZEOF(Desc.Usage, 1, "Hash logic below may be incorrect.");
+        ASSERT_SIZEOF(Desc.CPUAccessFlags, 1, "Hash logic below may be incorrect.");
+        ASSERT_SIZEOF(Desc.Mode, 1, "Hash logic below may be incorrect.");
+
+        this->m_Hasher(
+            Desc.Size,
+            Desc.BindFlags,
+            ((static_cast<uint32_t>(Desc.Usage) << 0u) |
+             (static_cast<uint32_t>(Desc.CPUAccessFlags) << 8u) |
+             (static_cast<uint32_t>(Desc.Mode) << 16u)));
+    }
+};
+
 struct DefaultHasher
 {
     template <typename... ArgsType>
@@ -1322,6 +1348,16 @@ struct StdHasher
 
 namespace std
 {
+
+template <typename T>
+struct hash<Diligent::RefCntAutoPtr<T>>
+{
+    size_t operator()(const Diligent::RefCntAutoPtr<T>& Key) const noexcept
+    {
+        return std::hash<const T*>{}(static_cast<const T*>(Key));
+    }
+};
+
 
 template <>
 struct hash<Diligent::HashMapStringKey>
@@ -1375,6 +1411,8 @@ DEFINE_HASH(Diligent::ComputePipelineStateCreateInfo);
 DEFINE_HASH(Diligent::RayTracingPipelineStateCreateInfo);
 DEFINE_HASH(Diligent::TilePipelineDesc);
 DEFINE_HASH(Diligent::TilePipelineStateCreateInfo);
+DEFINE_HASH(Diligent::VertexPoolElementDesc);
+
 
 #undef DEFINE_HASH
 

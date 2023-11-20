@@ -1,27 +1,27 @@
 /*
- *  Copyright 2019-2022 Diligent Graphics LLC
+ *  Copyright 2019-2023 Diligent Graphics LLC
  *  Copyright 2015-2019 Egor Yusov
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  In no event and under no legal theory, whether in tort (including negligence), 
- *  contract, or otherwise, unless required by applicable law (such as deliberate 
+ *  In no event and under no legal theory, whether in tort (including negligence),
+ *  contract, or otherwise, unless required by applicable law (such as deliberate
  *  and grossly negligent acts) or agreed to in writing, shall any Contributor be
- *  liable for any damages, including any direct, indirect, special, incidental, 
- *  or consequential damages of any character arising as a result of this License or 
- *  out of the use or inability to use the software (including but not limited to damages 
- *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and 
- *  all other commercial damages or losses), even if such Contributor has been advised 
+ *  liable for any damages, including any direct, indirect, special, incidental,
+ *  or consequential damages of any character arising as a result of this License or
+ *  out of the use or inability to use the software (including but not limited to damages
+ *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and
+ *  all other commercial damages or losses), even if such Contributor has been advised
  *  of the possibility of such damages.
  */
 
@@ -77,15 +77,31 @@ bool VerifyDrawIndexedAttribs(const DrawIndexedAttribs& Attribs)
     return true;
 }
 
-bool VerifyDrawMeshAttribs(Uint32 MaxDrawMeshTasksCount, const DrawMeshAttribs& Attribs)
+bool VerifyDrawMeshAttribs(const MeshShaderProperties& MeshShaderProps, const DrawMeshAttribs& Attribs)
 {
 #define CHECK_DRAW_MESH_ATTRIBS(Expr, ...) CHECK_PARAMETER(Expr, "Draw mesh attribs are invalid: ", __VA_ARGS__)
 
-    if (Attribs.ThreadGroupCount == 0)
-        LOG_INFO_MESSAGE("DrawMeshAttribs.ThreadGroupCount is 0. This is OK as the draw command will be ignored, but may be unintentional.");
+    if (Attribs.ThreadGroupCountX == 0)
+        LOG_INFO_MESSAGE("DrawMeshAttribs.ThreadGroupCountX is 0. This is OK as the draw command will be ignored, but may be unintentional.");
+    if (Attribs.ThreadGroupCountY == 0)
+        LOG_INFO_MESSAGE("DrawMeshAttribs.ThreadGroupCountY is 0. This is OK as the draw command will be ignored, but may be unintentional.");
+    if (Attribs.ThreadGroupCountZ == 0)
+        LOG_INFO_MESSAGE("DrawMeshAttribs.ThreadGroupCountZ is 0. This is OK as the draw command will be ignored, but may be unintentional.");
 
-    CHECK_DRAW_MESH_ATTRIBS(Attribs.ThreadGroupCount <= MaxDrawMeshTasksCount,
-                            "ThreadGroupCount (", Attribs.ThreadGroupCount, ") must not exceed ", MaxDrawMeshTasksCount);
+    CHECK_DRAW_MESH_ATTRIBS(Attribs.ThreadGroupCountX <= MeshShaderProps.MaxThreadGroupCountX,
+                            "ThreadGroupCountX (", Attribs.ThreadGroupCountX, ") must not exceed MeshShaderProps.MaxThreadGroupCountX (",
+                            MeshShaderProps.MaxThreadGroupCountX, ").");
+    CHECK_DRAW_MESH_ATTRIBS(Attribs.ThreadGroupCountY <= MeshShaderProps.MaxThreadGroupCountY,
+                            "ThreadGroupCountY (", Attribs.ThreadGroupCountY, ") must not exceed MeshShaderProps.MaxThreadGroupCountY (",
+                            MeshShaderProps.MaxThreadGroupCountY, ").");
+    CHECK_DRAW_MESH_ATTRIBS(Attribs.ThreadGroupCountZ <= MeshShaderProps.MaxThreadGroupCountZ,
+                            "ThreadGroupCountZ (", Attribs.ThreadGroupCountZ, ") must not exceed MeshShaderProps.MaxThreadGroupCountZ (",
+                            MeshShaderProps.MaxThreadGroupCountZ, ").");
+
+    const auto TotalGroups = Uint64{Attribs.ThreadGroupCountX} * Uint64{Attribs.ThreadGroupCountY} * Uint64{Attribs.ThreadGroupCountZ};
+    CHECK_DRAW_MESH_ATTRIBS(TotalGroups <= MeshShaderProps.MaxThreadGroupTotalCount,
+                            "Total thread group count (", TotalGroups, ") must not exceed MeshShaderProps.MaxThreadGroupTotalCount (",
+                            MeshShaderProps.MaxThreadGroupTotalCount, ").");
 
 #undef CHECK_DRAW_MESH_ATTRIBS
 

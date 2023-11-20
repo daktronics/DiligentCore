@@ -1,5 +1,5 @@
 /*
- *  Copyright 2019-2022 Diligent Graphics LLC
+ *  Copyright 2019-2023 Diligent Graphics LLC
  *  Copyright 2015-2019 Egor Yusov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -146,7 +146,8 @@ void CreateGraphicsPipeline(RenderDeviceVkImpl*                           pDevic
             GraphicsPipeline.SmplDesc.Count,
             GraphicsPipeline.RTVFormats,
             GraphicsPipeline.DSVFormat,
-            (GraphicsPipeline.ShadingRateFlags & PIPELINE_SHADING_RATE_FLAG_TEXTURE_BASED) != 0};
+            (GraphicsPipeline.ShadingRateFlags & PIPELINE_SHADING_RATE_FLAG_TEXTURE_BASED) != 0,
+            GraphicsPipeline.ReadOnlyDSV};
         pRenderPass = RPCache.GetRenderPass(Key);
         if (pRenderPass == nullptr)
             LOG_ERROR_AND_THROW("Failed to create default render pass.");
@@ -181,11 +182,17 @@ void CreateGraphicsPipeline(RenderDeviceVkImpl*                           pDevic
     }
 
     VkPipelineInputAssemblyStateCreateInfo InputAssemblyCI{};
-    InputAssemblyCI.sType                  = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    InputAssemblyCI.pNext                  = nullptr;
-    InputAssemblyCI.flags                  = 0; // reserved for future use
-    InputAssemblyCI.primitiveRestartEnable = VK_FALSE;
-    PipelineCI.pInputAssemblyState         = &InputAssemblyCI;
+    InputAssemblyCI.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+    InputAssemblyCI.pNext = nullptr;
+    InputAssemblyCI.flags = 0; // reserved for future use
+    InputAssemblyCI.primitiveRestartEnable =
+        (GraphicsPipeline.PrimitiveTopology == PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP ||
+         GraphicsPipeline.PrimitiveTopology == PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_ADJ ||
+         GraphicsPipeline.PrimitiveTopology == PRIMITIVE_TOPOLOGY_LINE_STRIP ||
+         GraphicsPipeline.PrimitiveTopology == PRIMITIVE_TOPOLOGY_LINE_STRIP_ADJ) ?
+        VK_TRUE :
+        VK_FALSE;
+    PipelineCI.pInputAssemblyState = &InputAssemblyCI;
 
 
     VkPipelineTessellationStateCreateInfo TessStateCI{};

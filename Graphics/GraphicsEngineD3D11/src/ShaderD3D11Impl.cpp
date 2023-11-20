@@ -1,5 +1,5 @@
 /*
- *  Copyright 2019-2022 Diligent Graphics LLC
+ *  Copyright 2019-2023 Diligent Graphics LLC
  *  Copyright 2015-2019 Egor Yusov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -100,7 +100,13 @@ ShaderD3D11Impl::ShaderD3D11Impl(IReferenceCounters*     pRefCounters,
         D3D11ShaderCI.AdapterInfo,
         IsDeviceInternal
     },
-    ShaderD3DBase{ShaderCI, GetD3D11ShaderModel(D3D11ShaderCI.FeatureLevel, ShaderCI.HLSLVersion), nullptr}
+    ShaderD3DBase
+    {
+        ShaderCI,
+        GetD3D11ShaderModel(D3D11ShaderCI.FeatureLevel, ShaderCI.HLSLVersion),
+        nullptr, // DxCompiler
+        D3D11ShaderCI.ppCompilerOutput
+    }
 // clang-format on
 {
     // Load shader resources
@@ -108,7 +114,11 @@ ShaderD3D11Impl::ShaderD3D11Impl(IReferenceCounters*     pRefCounters,
     {
         auto& Allocator  = GetRawAllocator();
         auto* pRawMem    = ALLOCATE(Allocator, "Allocator for ShaderResources", ShaderResourcesD3D11, 1);
-        auto* pResources = new (pRawMem) ShaderResourcesD3D11{m_pShaderByteCode, m_Desc, m_Desc.UseCombinedTextureSamplers ? m_Desc.CombinedSamplerSuffix : nullptr};
+        auto* pResources = new (pRawMem) ShaderResourcesD3D11{
+            m_pShaderByteCode,
+            m_Desc,
+            m_Desc.UseCombinedTextureSamplers ? m_Desc.CombinedSamplerSuffix : nullptr,
+            ShaderCI.LoadConstantBufferReflection};
         m_pShaderResources.reset(pResources, STDDeleterRawMem<ShaderResourcesD3D11>(Allocator));
     }
 }

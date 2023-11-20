@@ -1,5 +1,5 @@
 /*
- *  Copyright 2019-2022 Diligent Graphics LLC
+ *  Copyright 2019-2023 Diligent Graphics LLC
  *  Copyright 2015-2019 Egor Yusov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -71,7 +71,7 @@ std::vector<uint32_t> CompileShaderDXC(const ShaderCreateInfo&         ShaderCI,
     auto* pDXCompiler = VkShaderCI.pDXCompiler;
     VERIFY_EXPR(pDXCompiler != nullptr && pDXCompiler->IsLoaded());
     std::vector<uint32_t> SPIRV;
-    pDXCompiler->Compile(ShaderCI, ShaderCI.HLSLVersion, VulkanDefine, nullptr, &SPIRV, ShaderCI.ppCompilerOutput);
+    pDXCompiler->Compile(ShaderCI, ShaderCI.HLSLVersion, VulkanDefine, nullptr, &SPIRV, VkShaderCI.ppCompilerOutput);
 
 #if !DILIGENT_NO_HLSL
     // SPIR-V bytecode generated from HLSL must be legalized to
@@ -97,14 +97,14 @@ std::vector<uint32_t> CompileShaderGLSLang(const ShaderCreateInfo&         Shade
 #else
     if (ShaderCI.SourceLanguage == SHADER_SOURCE_LANGUAGE_HLSL)
     {
-        SPIRV = GLSLangUtils::HLSLtoSPIRV(ShaderCI, GLSLangUtils::SpirvVersion::Vk100, VulkanDefine, ShaderCI.ppCompilerOutput);
+        SPIRV = GLSLangUtils::HLSLtoSPIRV(ShaderCI, GLSLangUtils::SpirvVersion::Vk100, VulkanDefine, VkShaderCI.ppCompilerOutput);
     }
     else
     {
         std::string          GLSLSourceString;
         ShaderSourceFileData SourceData;
 
-        const ShaderMacro* Macros = nullptr;
+        ShaderMacroArray Macros;
         if (ShaderCI.SourceLanguage == SHADER_SOURCE_LANGUAGE_GLSL_VERBATIM)
         {
             // Read the source file directly and use it as is
@@ -131,7 +131,7 @@ std::vector<uint32_t> CompileShaderGLSLang(const ShaderCreateInfo&         Shade
         Attribs.Macros                     = Macros;
         Attribs.AssignBindings             = true;
         Attribs.pShaderSourceStreamFactory = ShaderCI.pShaderSourceStreamFactory;
-        Attribs.ppCompilerOutput           = ShaderCI.ppCompilerOutput;
+        Attribs.ppCompilerOutput           = VkShaderCI.ppCompilerOutput;
 
         if (VkShaderCI.VkVersion >= VK_API_VERSION_1_2)
             Attribs.Version = GLSLangUtils::SpirvVersion::Vk120;
@@ -227,6 +227,7 @@ ShaderVkImpl::ShaderVkImpl(IReferenceCounters*     pRefCounters,
                 m_Desc,
                 m_Desc.UseCombinedTextureSamplers ? m_Desc.CombinedSamplerSuffix : nullptr,
                 LoadShaderInputs,
+                ShaderCI.LoadConstantBufferReflection,
                 m_EntryPoint //
             };
         VERIFY_EXPR(ShaderCI.ByteCode != nullptr || m_EntryPoint == ShaderCI.EntryPoint);
@@ -287,6 +288,19 @@ void ShaderVkImpl::GetResourceDesc(Uint32 Index, ShaderResourceDesc& ResourceDes
         const auto& SPIRVResource = m_pShaderResources->GetResource(Index);
         ResourceDesc              = SPIRVResource.GetResourceDesc();
     }
+}
+
+const ShaderCodeBufferDesc* ShaderVkImpl::GetConstantBufferDesc(Uint32 Index) const
+{
+    auto ResCount = GetResourceCount();
+    if (Index >= ResCount)
+    {
+        UNEXPECTED("Resource index (", Index, ") is out of range");
+        return nullptr;
+    }
+
+    // Uniform buffers always go first in the list of resources
+    return m_pShaderResources->GetUniformBufferDesc(Index);
 }
 
 } // namespace Diligent

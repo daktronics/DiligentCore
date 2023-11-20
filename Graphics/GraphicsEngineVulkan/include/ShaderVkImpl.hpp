@@ -1,5 +1,5 @@
 /*
- *  Copyright 2019-2022 Diligent Graphics LLC
+ *  Copyright 2019-2023 Diligent Graphics LLC
  *  Copyright 2015-2019 Egor Yusov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -54,6 +54,7 @@ public:
         const GraphicsAdapterInfo& AdapterInfo;
         const Uint32               VkVersion;
         const bool                 HasSpirv14;
+        IDataBlob** const          ppCompilerOutput;
     };
     ShaderVkImpl(IReferenceCounters*     pRefCounters,
                  RenderDeviceVkImpl*     pRenderDeviceVk,
@@ -72,6 +73,9 @@ public:
 
     /// Implementation of IShader::GetResource() in Vulkan backend.
     virtual void DILIGENT_CALL_TYPE GetResourceDesc(Uint32 Index, ShaderResourceDesc& ResourceDesc) const override final;
+
+    /// Implementation of IShader::GetConstantBufferDesc() in Vulkan backend.
+    virtual const ShaderCodeBufferDesc* DILIGENT_CALL_TYPE GetConstantBufferDesc(Uint32 Index) const override final;
 
     /// Implementation of IShaderVk::GetSPIRV().
     virtual const std::vector<uint32_t>& DILIGENT_CALL_TYPE GetSPIRV() const override final

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2019-2022 Diligent Graphics LLC
+ *  Copyright 2019-2023 Diligent Graphics LLC
  *  Copyright 2015-2019 Egor Yusov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -123,35 +123,35 @@ public:
                      const EngineCreateInfo&    EngineCI,
                      const GraphicsAdapterInfo& AdapterInfo) :
         // clang-format off
-        TObjectBase              {pRefCounters},
-        m_pEngineFactory         {pEngineFactory},
-        m_ValidationFlags        {EngineCI.ValidationFlags},
-        m_AdapterInfo            {AdapterInfo},
-        m_SamplersRegistry       {RawMemAllocator, "sampler"},
-        m_TextureFormatsInfo     (TEX_FORMAT_NUM_FORMATS, TextureFormatInfoExt(), STD_ALLOCATOR_RAW_MEM(TextureFormatInfoExt, RawMemAllocator, "Allocator for vector<TextureFormatInfoExt>")),
-        m_TexFmtInfoInitFlags    (TEX_FORMAT_NUM_FORMATS, false, STD_ALLOCATOR_RAW_MEM(bool, RawMemAllocator, "Allocator for vector<bool>")),
-        m_wpImmediateContexts    (std::max(1u, EngineCI.NumImmediateContexts), RefCntWeakPtr<DeviceContextImplType>(), STD_ALLOCATOR_RAW_MEM(RefCntWeakPtr<DeviceContextImplType>, RawMemAllocator, "Allocator for vector<RefCntWeakPtr<DeviceContextImplType>>")),
-        m_wpDeferredContexts     (EngineCI.NumDeferredContexts, RefCntWeakPtr<DeviceContextImplType>(), STD_ALLOCATOR_RAW_MEM(RefCntWeakPtr<DeviceContextImplType>, RawMemAllocator, "Allocator for vector<RefCntWeakPtr<DeviceContextImplType>>")),
-        m_RawMemAllocator        {RawMemAllocator},
-        m_TexObjAllocator        {RawMemAllocator, sizeof(TextureImplType),                    64},
-        m_TexViewObjAllocator    {RawMemAllocator, sizeof(TextureViewImplType),                64},
-        m_BufObjAllocator        {RawMemAllocator, sizeof(BufferImplType),                    128},
-        m_BuffViewObjAllocator   {RawMemAllocator, sizeof(BufferViewImplType),                128},
-        m_ShaderObjAllocator     {RawMemAllocator, sizeof(ShaderImplType),                     32},
-        m_SamplerObjAllocator    {RawMemAllocator, sizeof(SamplerImplType),                    32},
-        m_PSOAllocator           {RawMemAllocator, sizeof(PipelineStateImplType),             128},
-        m_SRBAllocator           {RawMemAllocator, sizeof(ShaderResourceBindingImplType),    1024},
-        m_ResMappingAllocator    {RawMemAllocator, sizeof(ResourceMappingImpl),                16},
-        m_FenceAllocator         {RawMemAllocator, sizeof(FenceImplType),                      16},
-        m_QueryAllocator         {RawMemAllocator, sizeof(QueryImplType),                      16},
-        m_RenderPassAllocator    {RawMemAllocator, sizeof(RenderPassImplType),                 16},
-        m_FramebufferAllocator   {RawMemAllocator, sizeof(FramebufferImplType),                16},
-        m_BLASAllocator          {RawMemAllocator, sizeof(BottomLevelASImplType),              16},
-        m_TLASAllocator          {RawMemAllocator, sizeof(TopLevelASImplType),                 16},
-        m_SBTAllocator           {RawMemAllocator, sizeof(ShaderBindingTableImplType),         16},
-        m_PipeResSignAllocator   {RawMemAllocator, sizeof(PipelineResourceSignatureImplType), 128},
-        m_MemObjAllocator        {RawMemAllocator, sizeof(DeviceMemoryImplType),               16},
-        m_PSOCacheAllocator      {RawMemAllocator, sizeof(PipelineStateCacheImplType),         16}
+        TObjectBase           {pRefCounters},
+        m_pEngineFactory      {pEngineFactory},
+        m_ValidationFlags     {EngineCI.ValidationFlags},
+        m_AdapterInfo         {AdapterInfo},
+        m_SamplersRegistry    {RawMemAllocator, "sampler"},
+        m_TextureFormatsInfo  (TEX_FORMAT_NUM_FORMATS, TextureFormatInfoExt(), STD_ALLOCATOR_RAW_MEM(TextureFormatInfoExt, RawMemAllocator, "Allocator for vector<TextureFormatInfoExt>")),
+        m_TexFmtInfoInitFlags (TEX_FORMAT_NUM_FORMATS, false, STD_ALLOCATOR_RAW_MEM(bool, RawMemAllocator, "Allocator for vector<bool>")),
+        m_wpImmediateContexts (std::max(1u, EngineCI.NumImmediateContexts), RefCntWeakPtr<DeviceContextImplType>(), STD_ALLOCATOR_RAW_MEM(RefCntWeakPtr<DeviceContextImplType>, RawMemAllocator, "Allocator for vector<RefCntWeakPtr<DeviceContextImplType>>")),
+        m_wpDeferredContexts  (EngineCI.NumDeferredContexts, RefCntWeakPtr<DeviceContextImplType>(), STD_ALLOCATOR_RAW_MEM(RefCntWeakPtr<DeviceContextImplType>, RawMemAllocator, "Allocator for vector<RefCntWeakPtr<DeviceContextImplType>>")),
+        m_RawMemAllocator     {RawMemAllocator},
+        m_TexObjAllocator     {RawMemAllocator, sizeof(TextureImplType),                   16},
+        m_TexViewObjAllocator {RawMemAllocator, sizeof(TextureViewImplType),               32},
+        m_BufObjAllocator     {RawMemAllocator, sizeof(BufferImplType),                    16},
+        m_BuffViewObjAllocator{RawMemAllocator, sizeof(BufferViewImplType),                32},
+        m_ShaderObjAllocator  {RawMemAllocator, sizeof(ShaderImplType),                    16},
+        m_SamplerObjAllocator {RawMemAllocator, sizeof(SamplerImplType),                   32},
+        m_PSOAllocator        {RawMemAllocator, sizeof(PipelineStateImplType),             16},
+        m_SRBAllocator        {RawMemAllocator, sizeof(ShaderResourceBindingImplType),     64},
+        m_ResMappingAllocator {RawMemAllocator, sizeof(ResourceMappingImpl),                8},
+        m_FenceAllocator      {RawMemAllocator, sizeof(FenceImplType),                     16},
+        m_QueryAllocator      {RawMemAllocator, sizeof(QueryImplType),                     16},
+        m_RenderPassAllocator {RawMemAllocator, sizeof(RenderPassImplType),                16},
+        m_FramebufferAllocator{RawMemAllocator, sizeof(FramebufferImplType),               16},
+        m_BLASAllocator       {RawMemAllocator, sizeof(BottomLevelASImplType),              8},
+        m_TLASAllocator       {RawMemAllocator, sizeof(TopLevelASImplType),                 8},
+        m_SBTAllocator        {RawMemAllocator, sizeof(ShaderBindingTableImplType),         8},
+        m_PipeResSignAllocator{RawMemAllocator, sizeof(PipelineResourceSignatureImplType), 16},
+        m_MemObjAllocator     {RawMemAllocator, sizeof(DeviceMemoryImplType),              16},
+        m_PSOCacheAllocator   {RawMemAllocator, sizeof(PipelineStateCacheImplType),         4}
     // clang-format on
     {
         // Initialize texture format info
@@ -217,20 +217,25 @@ public:
     }
 
     /// Implementation of IRenderDevice::CreateResourceMapping().
-    virtual void DILIGENT_CALL_TYPE CreateResourceMapping(const ResourceMappingDesc& MappingDesc, IResourceMapping** ppMapping) override final
+    virtual void DILIGENT_CALL_TYPE CreateResourceMapping(const ResourceMappingCreateInfo& ResMappingCI, IResourceMapping** ppMapping) override final
     {
         DEV_CHECK_ERR(ppMapping != nullptr, "Null pointer provided");
         if (ppMapping == nullptr)
             return;
         DEV_CHECK_ERR(*ppMapping == nullptr, "Overwriting reference to existing object may cause memory leaks");
+        DEV_CHECK_ERR(ResMappingCI.pEntries == nullptr || ResMappingCI.NumEntries != 0, "Starting with API253010, the number of entries is defined through the NumEntries member.");
 
         auto* pResourceMapping{NEW_RC_OBJ(m_ResMappingAllocator, "ResourceMappingImpl instance", ResourceMappingImpl)(GetRawAllocator())};
         pResourceMapping->QueryInterface(IID_ResourceMapping, reinterpret_cast<IObject**>(ppMapping));
-        if (MappingDesc.pEntries)
+        if (ResMappingCI.pEntries != nullptr)
         {
-            for (auto* pEntry = MappingDesc.pEntries; pEntry->Name && pEntry->pObject; ++pEntry)
+            for (Uint32 i = 0; i < ResMappingCI.NumEntries; ++i)
             {
-                (*ppMapping)->AddResourceArray(pEntry->Name, pEntry->ArrayIndex, &pEntry->pObject, 1, true);
+                const auto& Entry = ResMappingCI.pEntries[i];
+                if (Entry.Name != nullptr && Entry.pObject != nullptr)
+                    (*ppMapping)->AddResourceArray(Entry.Name, Entry.ArrayIndex, &Entry.pObject, 1, true);
+                else
+                    DEV_ERROR("Name and pObject must not be null. Note that starting with API253010, the number of entries is defined through the NumEntries member.");
             }
         }
     }
@@ -274,7 +279,7 @@ public:
 
     virtual IEngineFactory* DILIGENT_CALL_TYPE GetEngineFactory() const override final
     {
-        return m_pEngineFactory.RawPtr<IEngineFactory>();
+        return m_pEngineFactory;
     }
 
     /// Base implementation of IRenderDevice::CreateTilePipelineState().

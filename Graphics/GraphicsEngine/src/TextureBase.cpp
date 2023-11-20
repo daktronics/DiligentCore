@@ -1,27 +1,27 @@
 /*
- *  Copyright 2019-2022 Diligent Graphics LLC
+ *  Copyright 2019-2023 Diligent Graphics LLC
  *  Copyright 2015-2019 Egor Yusov
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  In no event and under no legal theory, whether in tort (including negligence), 
- *  contract, or otherwise, unless required by applicable law (such as deliberate 
+ *  In no event and under no legal theory, whether in tort (including negligence),
+ *  contract, or otherwise, unless required by applicable law (such as deliberate
  *  and grossly negligent acts) or agreed to in writing, shall any Contributor be
- *  liable for any damages, including any direct, indirect, special, incidental, 
- *  or consequential damages of any character arising as a result of this License or 
- *  out of the use or inability to use the software (including but not limited to damages 
- *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and 
- *  all other commercial damages or losses), even if such Contributor has been advised 
+ *  liable for any damages, including any direct, indirect, special, incidental,
+ *  or consequential damages of any character arising as a result of this License or
+ *  out of the use or inability to use the software (including but not limited to damages
+ *  for loss of goodwill, work stoppage, computer failure or malfunction, or any and
+ *  all other commercial damages or losses), even if such Contributor has been advised
  *  of the possibility of such damages.
  */
 
@@ -522,6 +522,7 @@ void ValidatedAndCorrectTextureViewDesc(const TextureDesc& TexDesc, TextureViewD
 
                 case TEXTURE_VIEW_RENDER_TARGET:
                 case TEXTURE_VIEW_DEPTH_STENCIL:
+                case TEXTURE_VIEW_READ_ONLY_DEPTH_STENCIL:
                 case TEXTURE_VIEW_UNORDERED_ACCESS:
                     ViewDesc.TextureDim = RESOURCE_DIM_TEX_2D_ARRAY;
                     break;
@@ -676,8 +677,11 @@ void ValidatedAndCorrectTextureViewDesc(const TextureDesc& TexDesc, TextureViewD
     if (ViewDesc.ViewType == TEXTURE_VIEW_SHADING_RATE)
     {
         if ((TexDesc.BindFlags & BIND_SHADING_RATE) == 0)
-            TEX_VIEW_VALIDATION_ERROR("To create TEXTURE_VIEW_SHADING_RATE, the texture must be created with BIND_SHADING_RATE flag");
+            TEX_VIEW_VALIDATION_ERROR("To create TEXTURE_VIEW_SHADING_RATE, the texture must be created with BIND_SHADING_RATE flag.");
     }
+
+    if (ViewDesc.ViewType != TEXTURE_VIEW_SHADER_RESOURCE && !IsIdentityComponentMapping(ViewDesc.Swizzle))
+        TEX_VIEW_VALIDATION_ERROR("Non-identity texture component swizzle is only supported for shader resource views.");
 
 #undef TEX_VIEW_VALIDATION_ERROR
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2019-2022 Diligent Graphics LLC
+ *  Copyright 2019-2023 Diligent Graphics LLC
  *  Copyright 2015-2019 Egor Yusov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -1118,7 +1118,7 @@ TEST(Common_BasicMath, MakeObject)
         EXPECT_EQ(float2::MakeVector(data), float2(1, 2));
         EXPECT_EQ(float3::MakeVector(data), float3(1, 2, 3));
         EXPECT_EQ(float4::MakeVector(data), float4(1, 2, 3, 4));
-        EXPECT_EQ(Quaternion::MakeQuaternion(data), Quaternion(1, 2, 3, 4));
+        EXPECT_EQ(QuaternionF::MakeQuaternion(data), QuaternionF(1, 2, 3, 4));
         EXPECT_EQ(float4x4::MakeMatrix(data), float4x4(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16));
         EXPECT_EQ(float3x3::MakeMatrix(data), float3x3(1, 2, 3, 4, 5, 6, 7, 8, 9));
         EXPECT_EQ(float2x2::MakeMatrix(data), float2x2(1, 2, 3, 4));
@@ -1132,7 +1132,7 @@ TEST(Common_BasicMath, MakeObject)
         EXPECT_EQ(float2::MakeVector(data), float2(10, 20));
         EXPECT_EQ(float3::MakeVector(data.begin()), float3(10, 20, 30));
         EXPECT_EQ(float4::MakeVector(data.cbegin()), float4(10, 20, 30, 40));
-        EXPECT_EQ(Quaternion::MakeQuaternion(data.rbegin()), Quaternion(160, 150, 140, 130));
+        EXPECT_EQ(QuaternionF::MakeQuaternion(data.rbegin()), QuaternionF(160, 150, 140, 130));
         EXPECT_EQ(float4x4::MakeMatrix(data.begin()), float4x4(10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160));
         EXPECT_EQ(float3x3::MakeMatrix(data.cbegin()), float3x3(10, 20, 30, 40, 50, 60, 70, 80, 90));
         EXPECT_EQ(float2x2::MakeMatrix(data.crbegin()), float2x2(160, 150, 140, 130));
@@ -1192,6 +1192,43 @@ TEST(Common_BasicMath, StdFloorCeilVector)
     EXPECT_EQ(std::ceil(float2(0.1f, 1.2f)), float2(1, 2));
     EXPECT_EQ(std::ceil(float3(0.1f, 1.2f, 2.3f)), float3(1, 2, 3));
     EXPECT_EQ(std::ceil(float4(0.1f, 1.2f, 2.3f, 3.4f)), float4(1, 2, 3, 4));
+}
+
+TEST(Common_BasicMath, FastFloorCeil)
+{
+    for (float x = 1.f; x < FLT_MAX / 2.f; x *= 2.f)
+    {
+        EXPECT_EQ(FastFloor(x), x);
+        EXPECT_EQ(FastFloor(x + 0.5f), std::floor(x + 0.5f));
+        EXPECT_EQ(FastFloor(x - 0.5f), std::floor(x - 0.5f));
+        EXPECT_EQ(FastFloor(-x), -x);
+        EXPECT_EQ(FastFloor(-x + 0.5f), std::floor(-x + 0.5f));
+        EXPECT_EQ(FastFloor(-x - 0.5f), std::floor(-x - 0.5f));
+
+        EXPECT_EQ(FastCeil(x), x);
+        EXPECT_EQ(FastCeil(x + 0.5f), std::ceil(x + 0.5f));
+        EXPECT_EQ(FastCeil(x - 0.5f), std::ceil(x - 0.5f));
+        EXPECT_EQ(FastCeil(-x), -x);
+        EXPECT_EQ(FastCeil(-x + 0.5f), std::ceil(-x + 0.5f));
+        EXPECT_EQ(FastCeil(-x - 0.5f), std::ceil(-x - 0.5f));
+    }
+
+    for (double x = 1.0; x < DBL_MAX / 2.0; x *= 2.0)
+    {
+        EXPECT_EQ(FastFloor(x), x);
+        EXPECT_EQ(FastFloor(x + 0.5), std::floor(x + 0.5));
+        EXPECT_EQ(FastFloor(x - 0.5), std::floor(x - 0.5));
+        EXPECT_EQ(FastFloor(-x), -x);
+        EXPECT_EQ(FastFloor(-x + 0.5), std::floor(-x + 0.5));
+        EXPECT_EQ(FastFloor(-x - 0.5), std::floor(-x - 0.5));
+
+        EXPECT_EQ(FastCeil(x), x);
+        EXPECT_EQ(FastCeil(x + 0.5), std::ceil(x + 0.5));
+        EXPECT_EQ(FastCeil(x - 0.5), std::ceil(x - 0.5));
+        EXPECT_EQ(FastCeil(-x), -x);
+        EXPECT_EQ(FastCeil(-x + 0.5), std::ceil(-x + 0.5));
+        EXPECT_EQ(FastCeil(-x - 0.5), std::ceil(-x - 0.5));
+    }
 }
 
 TEST(Common_BasicMath, FastFloorCeilVector)
@@ -2380,6 +2417,518 @@ TEST(Common_AdvancedMath, CheckLineSectionOverlap)
     EXPECT_TRUE(CheckLineSectionOverlap<true>(10, 20, 0, 10));
     EXPECT_FALSE(CheckLineSectionOverlap<false>(0, 10, 10, 20));
     EXPECT_FALSE(CheckLineSectionOverlap<false>(10, 20, 0, 10));
+}
+
+
+TEST(Common_AdvancedMath, GetBoxVisibilityAgainstPlane)
+{
+    BoundBox Box{
+        float3{1, 2, 4},
+        float3{3, 5, 7},
+    };
+    for (float s = 0.25f; s <= 4.f; s *= 2.f)
+    {
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{1 * s, 0, 0}, -0.999f * s}, Box), BoxVisibility::FullyVisible);
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{1 * s, 0, 0}, -1.001f * s}, Box), BoxVisibility::Intersecting);
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{1 * s, 0, 0}, -2.999f * s}, Box), BoxVisibility::Intersecting);
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{1 * s, 0, 0}, -3.001f * s}, Box), BoxVisibility::Invisible);
+
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{-1 * s, 0, 0}, 0.999f * s}, Box), BoxVisibility::Invisible);
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{-1 * s, 0, 0}, 1.001f * s}, Box), BoxVisibility::Intersecting);
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{-1 * s, 0, 0}, 2.999f * s}, Box), BoxVisibility::Intersecting);
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{-1 * s, 0, 0}, 3.001f * s}, Box), BoxVisibility::FullyVisible);
+
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{0, 1 * s, 0}, -1.999f * s}, Box), BoxVisibility::FullyVisible);
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{0, 1 * s, 0}, -2.001f * s}, Box), BoxVisibility::Intersecting);
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{0, 1 * s, 0}, -4.999f * s}, Box), BoxVisibility::Intersecting);
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{0, 1 * s, 0}, -5.001f * s}, Box), BoxVisibility::Invisible);
+
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{0, -1 * s, 0}, 1.999f * s}, Box), BoxVisibility::Invisible);
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{0, -1 * s, 0}, 2.001f * s}, Box), BoxVisibility::Intersecting);
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{0, -1 * s, 0}, 4.999f * s}, Box), BoxVisibility::Intersecting);
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{0, -1 * s, 0}, 5.001f * s}, Box), BoxVisibility::FullyVisible);
+
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{0, 0, 1 * s}, -3.999f * s}, Box), BoxVisibility::FullyVisible);
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{0, 0, 1 * s}, -4.001f * s}, Box), BoxVisibility::Intersecting);
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{0, 0, 1 * s}, -6.999f * s}, Box), BoxVisibility::Intersecting);
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{0, 0, 1 * s}, -7.001f * s}, Box), BoxVisibility::Invisible);
+
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{0, 0, -1 * s}, 3.999f * s}, Box), BoxVisibility::Invisible);
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{0, 0, -1 * s}, 4.001f * s}, Box), BoxVisibility::Intersecting);
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{0, 0, -1 * s}, 6.999f * s}, Box), BoxVisibility::Intersecting);
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{0, 0, -1 * s}, 7.001f * s}, Box), BoxVisibility::FullyVisible);
+    }
+}
+
+TEST(Common_AdvancedMath, GetOrientedBoxVisibilityAgainstPlane)
+{
+    OrientedBoundingBox Box{
+        float3{2, 4, 6},
+        {
+            float3{1, 0, 0},
+            float3{0, 1, 0},
+            float3{0, 0, 1},
+        },
+        {1, 2, 3},
+    };
+    for (float s = 0.25f; s <= 4.f; s *= 2.f)
+    {
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{1 * s, 0, 0}, -0.999f * s}, Box), BoxVisibility::FullyVisible);
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{1 * s, 0, 0}, -1.001f * s}, Box), BoxVisibility::Intersecting);
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{1 * s, 0, 0}, -2.999f * s}, Box), BoxVisibility::Intersecting);
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{1 * s, 0, 0}, -3.001f * s}, Box), BoxVisibility::Invisible);
+
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{-1 * s, 0, 0}, 0.999f * s}, Box), BoxVisibility::Invisible);
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{-1 * s, 0, 0}, 1.001f * s}, Box), BoxVisibility::Intersecting);
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{-1 * s, 0, 0}, 2.999f * s}, Box), BoxVisibility::Intersecting);
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{-1 * s, 0, 0}, 3.001f * s}, Box), BoxVisibility::FullyVisible);
+
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{0, 1 * s, 0}, -1.999f * s}, Box), BoxVisibility::FullyVisible);
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{0, 1 * s, 0}, -2.001f * s}, Box), BoxVisibility::Intersecting);
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{0, 1 * s, 0}, -5.999f * s}, Box), BoxVisibility::Intersecting);
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{0, 1 * s, 0}, -6.001f * s}, Box), BoxVisibility::Invisible);
+
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{0, -1 * s, 0}, 1.999f * s}, Box), BoxVisibility::Invisible);
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{0, -1 * s, 0}, 2.001f * s}, Box), BoxVisibility::Intersecting);
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{0, -1 * s, 0}, 5.999f * s}, Box), BoxVisibility::Intersecting);
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{0, -1 * s, 0}, 6.001f * s}, Box), BoxVisibility::FullyVisible);
+
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{0, 0, 1 * s}, -2.999f * s}, Box), BoxVisibility::FullyVisible);
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{0, 0, 1 * s}, -3.001f * s}, Box), BoxVisibility::Intersecting);
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{0, 0, 1 * s}, -8.999f * s}, Box), BoxVisibility::Intersecting);
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{0, 0, 1 * s}, -9.001f * s}, Box), BoxVisibility::Invisible);
+
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{0, 0, -1 * s}, 2.999f * s}, Box), BoxVisibility::Invisible);
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{0, 0, -1 * s}, 3.001f * s}, Box), BoxVisibility::Intersecting);
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{0, 0, -1 * s}, 8.999f * s}, Box), BoxVisibility::Intersecting);
+        EXPECT_EQ(GetBoxVisibilityAgainstPlane(Plane3D{float3{0, 0, -1 * s}, 9.001f * s}, Box), BoxVisibility::FullyVisible);
+    }
+}
+
+TEST(Common_AdvancedMath, GetPointToBoxDistance)
+{
+    BoundBox Box{float3{1, 2, 3}, float3{4, 5, 6}};
+
+    EXPECT_EQ(GetPointToBoxDistance(Box, float3{0, 3, 4}), 1.f);
+    EXPECT_EQ(GetPointToBoxDistance(Box, float3{6, 3, 4}), 2.f);
+    EXPECT_EQ(GetPointToBoxDistance(Box, float3{3, 0, 4}), 2.f);
+    EXPECT_EQ(GetPointToBoxDistance(Box, float3{3, 8, 4}), 3.f);
+    EXPECT_EQ(GetPointToBoxDistance(Box, float3{3, 4, 1}), 2.f);
+    EXPECT_EQ(GetPointToBoxDistance(Box, float3{3, 4, 9}), 3.f);
+    EXPECT_EQ(GetPointToBoxDistanceSqr(Box, float3{0, 0, 0}), 14.f);
+    EXPECT_EQ(GetPointToBoxDistanceSqr(Box, float3{5, 6, 7}), 3.f);
+
+    for (float x = -10.f; x <= +10.f; x += 0.5f)
+    {
+        for (float y = -10.f; y <= +10.f; y += 0.5f)
+        {
+            for (float z = -10.f; z <= +10.f; z += 0.5f)
+            {
+                float dx = x < Box.Min.x ?
+                    Box.Min.x - x :
+                    (x > Box.Max.x ? x - Box.Max.x : 0);
+                float dy = y < Box.Min.y ?
+                    Box.Min.y - y :
+                    (y > Box.Max.y ? y - Box.Max.y : 0);
+                float dz = z < Box.Min.z ?
+                    Box.Min.z - z :
+                    (z > Box.Max.z ? z - Box.Max.z : 0);
+                float DistSqr = dx * dx + dy * dy + dz * dz;
+                EXPECT_EQ(GetPointToBoxDistanceSqr(Box, float3{x, y, z}), DistSqr);
+            }
+        }
+    }
+}
+
+TEST(Common_AdvancedMath, GetPointToOrientedBoxDistance)
+{
+    OrientedBoundingBox OBB{
+        float3{1, -1.5, 3.5},
+        {
+            float3{1, 0, 0},
+            float3{0, -1, 0},
+            float3{0, 0, 1},
+        },
+        {2, 0.5, 1.5},
+    };
+
+    BoundBox AABB{float3{-1, -2, 2}, float3{3, -1, 5}};
+    for (float x = -10.f; x <= +10.f; x += 0.5f)
+    {
+        for (float y = -10.f; y <= +10.f; y += 0.5f)
+        {
+            for (float z = -10.f; z <= +10.f; z += 0.5f)
+            {
+                EXPECT_EQ(GetPointToBoxDistanceSqr(OBB, float3{x, y, z}), GetPointToBoxDistanceSqr(AABB, float3{x, y, z}));
+            }
+        }
+    }
+}
+
+
+TEST(Common_AdvancedMath, TriangulatePolygon2D)
+{
+    {
+        const std::vector<int2> Verts = {
+            {0, 0},
+            {1, 0},
+            {0, 1}};
+        const std::vector<Uint32> RefTris = {0, 1, 2};
+
+        const auto Tris = TriangulatePolygon<Uint32>(Verts);
+        EXPECT_EQ(Tris, RefTris);
+    }
+
+    for (size_t start_vert = 0; start_vert < 4; ++start_vert)
+    {
+        std::vector<int2> Verts;
+        {
+            //   3 ______ 2
+            //    |'.    |
+            //    |  '.  |
+            //    |____'.|
+            //   0        1
+            const std::vector<int2> BaseVerts = {
+                {0, 0},
+                {1, 0},
+                {1, 1},
+                {0, 1}};
+            for (size_t i = 0; i < BaseVerts.size(); ++i)
+                Verts.push_back(BaseVerts[(start_vert + i) % BaseVerts.size()]);
+        }
+
+        const std::vector<Uint32> RefTris = {3, 0, 1, 1, 2, 3};
+
+        const auto Tris = TriangulatePolygon<Uint32>(Verts);
+        EXPECT_EQ(Tris, RefTris);
+    }
+
+    for (size_t start_vert = 0; start_vert < 4; ++start_vert)
+    {
+        std::vector<float2> Verts;
+        {
+            //   1 ______ 2
+            //    |'.    |
+            //    |  '.  |
+            //    |____'.|
+            //   0        3
+            const std::vector<float2> BaseVerts = {
+                {0, 0},
+                {0, 1},
+                {1, 1},
+                {1, 0}};
+            for (size_t i = 0; i < BaseVerts.size(); ++i)
+                Verts.push_back(BaseVerts[(start_vert + i) % BaseVerts.size()]);
+        }
+        const std::vector<Uint32> RefTris = {3, 0, 1, 1, 2, 3};
+
+        const auto Tris = TriangulatePolygon<Uint32>(Verts);
+        EXPECT_EQ(Tris, RefTris);
+    }
+
+    for (size_t start_vert = 0; start_vert < 4; ++start_vert)
+    {
+        std::vector<int2> Verts;
+        {
+            //
+            //  3.       .1
+            //   \'. 2 .'/
+            //    \ '.' /
+            //     \   /
+            //      \ /
+            //       0
+            //
+            const std::vector<int2> BaseVerts = {
+                {0, 0},
+                {2, 3},
+                {0, 2},
+                {-1, 4}};
+
+            for (size_t i = 0; i < BaseVerts.size(); ++i)
+                Verts.push_back(BaseVerts[(start_vert + i) % BaseVerts.size()]);
+        }
+
+        std::vector<Uint32> RefTris;
+        switch (start_vert)
+        {
+            //
+            //  3.       .1
+            //   \'. 2 .'/
+            //    \ '.' /
+            //     \   /
+            //      \ /
+            //       0
+            //
+            case 0: RefTris = {0, 1, 2, 0, 2, 3}; break;
+
+            //
+            //  2.       .0
+            //   \'. 1 .'/
+            //    \ '.' /
+            //     \   /
+            //      \ /
+            //       3
+            //
+            case 1: RefTris = {3, 0, 1, 1, 2, 3}; break;
+
+            //
+            //  1.       .3
+            //   \'. 0 .'/
+            //    \ '.' /
+            //     \   /
+            //      \ /
+            //       2
+            //
+            case 2: RefTris = {0, 1, 2, 0, 2, 3}; break;
+
+            //
+            //  0.       .2
+            //   \'. 3 .'/
+            //    \ '.' /
+            //     \   /
+            //      \ /
+            //       1
+            //
+            case 3: RefTris = {3, 0, 1, 1, 2, 3}; break;
+        }
+
+        const auto Tris = TriangulatePolygon<Uint32>(Verts);
+        EXPECT_EQ(Tris, RefTris);
+    }
+
+    for (size_t start_vert = 0; start_vert < 4; ++start_vert)
+    {
+        std::vector<double2> Verts;
+        {
+            //
+            //  1.       .3
+            //   \'. 2 .'/
+            //    \ '.' /
+            //     \   /
+            //      \ /
+            //       0
+            //
+            const std::vector<double2> BaseVerts = {
+                {0, 0},
+                {-1, 4},
+                {0, 2},
+                {2, 3}};
+
+            for (size_t i = 0; i < BaseVerts.size(); ++i)
+                Verts.push_back(BaseVerts[(start_vert + i) % BaseVerts.size()]);
+        }
+
+        std::vector<Uint32> RefTris;
+        switch (start_vert)
+        {
+            // Same as above
+            case 0: RefTris = {0, 1, 2, 0, 2, 3}; break;
+            case 1: RefTris = {3, 0, 1, 1, 2, 3}; break;
+            case 2: RefTris = {0, 1, 2, 0, 2, 3}; break;
+            case 3: RefTris = {3, 0, 1, 1, 2, 3}; break;
+        }
+
+        const auto Tris = TriangulatePolygon<Uint32>(Verts);
+        EXPECT_EQ(Tris, RefTris);
+    }
+
+    for (size_t start_vert = 0; start_vert < 4; ++start_vert)
+    {
+        std::vector<int2> Verts;
+        {
+            //   0
+            //    |'.
+            //    |  '.
+            //    |    '.
+            //   1|    .'3
+            //    |  .'
+            //    |.'
+            //   2
+            const std::vector<int2> BaseVerts = {
+                {0, 1},
+                {0, 0},
+                {0, -1},
+                {1, 0}};
+            for (size_t i = 0; i < BaseVerts.size(); ++i)
+                Verts.push_back(BaseVerts[(start_vert + i) % BaseVerts.size()]);
+        }
+
+        const std::vector<Uint32> RefTris = {3, 0, 1, 1, 2, 3};
+
+        const auto Tris = TriangulatePolygon<Uint32>(Verts);
+        EXPECT_EQ(Tris, RefTris);
+    }
+
+    for (size_t start_vert = 0; start_vert < 4; ++start_vert)
+    {
+        std::vector<float2> Verts;
+        {
+            //   0
+            //    |'.
+            //    |  '.
+            //    |    '.
+            //   3|    .'1
+            //    |  .'
+            //    |.'
+            //   2
+            const std::vector<float2> BaseVerts = {
+                {0, 1},
+                {1, 0},
+                {0, -1},
+                {0, 0}};
+            for (size_t i = 0; i < BaseVerts.size(); ++i)
+                Verts.push_back(BaseVerts[(start_vert + i) % BaseVerts.size()]);
+        }
+
+        const std::vector<Uint32> RefTris = {3, 0, 1, 1, 2, 3};
+
+        const auto Tris = TriangulatePolygon<Uint32>(Verts);
+        EXPECT_EQ(Tris, RefTris);
+    }
+
+    for (size_t start_vert = 0; start_vert < 6; ++start_vert)
+    {
+        std::vector<float2> Verts;
+        {
+            //
+            //  4.       .2
+            //   |'. 3 .'|
+            //   |  '.'  |
+            //   |   .   |
+            //   |  /0\  |
+            //   | /   \ |
+            //   |/     \|
+            //  5         1
+            const std::vector<float2> BaseVerts = {
+                {0, -0.125},
+                {1, -2},
+                {1, +1},
+                {0, +0.125},
+                {-1, +1},
+                {-1, -2}};
+            for (size_t i = 0; i < BaseVerts.size(); ++i)
+                Verts.push_back(BaseVerts[(start_vert + i) % BaseVerts.size()]);
+        }
+        std::vector<Uint32> RefTris;
+        switch (start_vert)
+        {
+            case 0: RefTris = {0, 1, 2, 0, 2, 3, 5, 0, 3, 3, 4, 5}; break;
+
+            //  3.       .1
+            //   |'. 2 .'|
+            //   |  '.'  |
+            //   |   .   |
+            //   |  /5\  |
+            //   | /   \ |
+            //   |/     \|
+            //  4         0
+            case 1: RefTris = {5, 0, 1, 5, 1, 2, 5, 2, 3, 3, 4, 5}; break;
+
+            //  2.       .0
+            //   |'. 1 .'|
+            //   |  '.'  |
+            //   |   .   |
+            //   |  /4\  |
+            //   | /   \ |
+            //   |/     \|
+            //  3         5
+            case 2: RefTris = {5, 0, 1, 1, 2, 3, 1, 3, 4, 1, 4, 5}; break;
+
+            //  1.       .5
+            //   |'. 0 .'|
+            //   |  '.'  |
+            //   |   .   |
+            //   |  /3\  |
+            //   | /   \ |
+            //   |/     \|
+            //  2         4
+            case 3: RefTris = {0, 1, 2, 0, 2, 3, 5, 0, 3, 3, 4, 5}; break;
+
+            //  0.       .4
+            //   |'. 5 .'|
+            //   |  '.'  |
+            //   |   .   |
+            //   |  /2\  |
+            //   | /   \ |
+            //   |/     \|
+            //  1         3
+            case 4: RefTris = {5, 0, 1, 5, 1, 2, 5, 2, 3, 3, 4, 5}; break;
+
+            //  5.       .3
+            //   |'. 4 .'|
+            //   |  '.'  |
+            //   |   .   |
+            //   |  /1\  |
+            //   | /   \ |
+            //   |/     \|
+            //  0         2
+            case 5: RefTris = {5, 0, 1, 1, 2, 3, 1, 3, 4, 1, 4, 5}; break;
+        }
+
+        const auto Tris = TriangulatePolygon<Uint32>(Verts);
+        EXPECT_EQ(Tris, RefTris);
+    }
+
+    {
+        const std::vector<double2> Verts = {
+            {251.55066534585424, -239.37523310019236},
+            {405.01594942379404, -231.22402215509803},
+            {424.89128667213618, -233.76279213022161},
+            {354.97745192934343, -200.59163763765051},
+            {336.35298518777898, -212.50452779126249},
+            {207.88902013106224, -220.28173532753399},
+            {165.87167349297070, -158.97831739129651},
+            {165.87232914097831, -199.49128333157239},
+            {167.04717227593247, -201.15364958147507},
+            {170.33697864625216, -214.39292757663975},
+            {165.87260207492534, -216.35619205753781},
+        };
+        const auto Tris = TriangulatePolygon<Uint32>(Verts, false);
+
+        const std::vector<Uint32> RefTris = {1, 2, 3, 1, 3, 4, 0, 1, 4, 0, 4, 5, 10, 0, 5, 5, 6, 7, 5, 7, 8, 5, 8, 9, 5, 9, 10};
+        EXPECT_EQ(Tris, RefTris);
+    }
+}
+
+TEST(Common_AdvancedMath, TriangulatePolygon3D)
+{
+    for (size_t proj = 0; proj < 3; ++proj)
+    {
+        std::vector<float3> Verts;
+        {
+            //
+            //  4.       .2
+            //   |'. 3 .'|
+            //   |  '.'  |
+            //   |   .   |
+            //   |  /0\  |
+            //   | /   \ |
+            //   |/     \|
+            //  5         1
+            const std::vector<float2> BaseVerts = {
+                {0, -0.125},
+                {1, -2},
+                {1, +1},
+                {0, +0.125},
+                {-1, +1},
+                {-1, -2}};
+            for (size_t i = 0; i < BaseVerts.size(); ++i)
+            {
+                const auto v2 = BaseVerts[i];
+                switch (proj)
+                {
+                    case 0: Verts.push_back(float3{v2.x, v2.y, 0.75}); break;
+                    case 1: Verts.push_back(float3{v2.x, -2.5, v2.y}); break;
+                    case 2: Verts.push_back(float3{10.5, v2.x, v2.y}); break;
+                }
+            }
+        }
+
+        const std::vector<Uint32> RefTris = {0, 1, 2, 0, 2, 3, 5, 0, 3, 3, 4, 5};
+
+        const auto Tris = TriangulatePolygon3D<Uint32>(Verts);
+        EXPECT_EQ(Tris, RefTris);
+    }
 }
 
 } // namespace

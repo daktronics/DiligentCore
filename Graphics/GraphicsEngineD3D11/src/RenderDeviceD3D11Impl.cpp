@@ -1,5 +1,5 @@
 /*
- *  Copyright 2019-2022 Diligent Graphics LLC
+ *  Copyright 2019-2023 Diligent Graphics LLC
  *  Copyright 2015-2019 Egor Yusov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -80,10 +80,25 @@ RenderDeviceD3D11Impl::RenderDeviceD3D11Impl(IReferenceCounters*          pRefCo
     m_DeviceInfo.Type = RENDER_DEVICE_TYPE_D3D11;
     switch (m_pd3d11Device->GetFeatureLevel())
     {
-        case D3D_FEATURE_LEVEL_11_1: m_DeviceInfo.APIVersion = {11, 1}; break;
-        case D3D_FEATURE_LEVEL_11_0: m_DeviceInfo.APIVersion = {11, 0}; break;
-        case D3D_FEATURE_LEVEL_10_1: m_DeviceInfo.APIVersion = {10, 1}; break;
-        case D3D_FEATURE_LEVEL_10_0: m_DeviceInfo.APIVersion = {10, 0}; break;
+        case D3D_FEATURE_LEVEL_11_1:
+            m_DeviceInfo.APIVersion            = {11, 1};
+            m_DeviceInfo.MaxShaderVersion.HLSL = {5, 1};
+            break;
+        case D3D_FEATURE_LEVEL_11_0:
+            m_DeviceInfo.APIVersion            = {11, 0};
+            m_DeviceInfo.MaxShaderVersion.HLSL = {5, 0};
+            break;
+
+        case D3D_FEATURE_LEVEL_10_1:
+            m_DeviceInfo.APIVersion            = {10, 1};
+            m_DeviceInfo.MaxShaderVersion.HLSL = {4, 1};
+            break;
+
+        case D3D_FEATURE_LEVEL_10_0:
+            m_DeviceInfo.APIVersion            = {10, 0};
+            m_DeviceInfo.MaxShaderVersion.HLSL = {4, 0};
+            break;
+
         default: UNEXPECTED("Unexpected D3D feature level");
     }
 
@@ -176,12 +191,15 @@ void RenderDeviceD3D11Impl::CreateBuffer(const BufferDesc& BuffDesc, const Buffe
     CreateBufferImpl(ppBuffer, BuffDesc, pBuffData);
 }
 
-void RenderDeviceD3D11Impl::CreateShader(const ShaderCreateInfo& ShaderCI, IShader** ppShader)
+void RenderDeviceD3D11Impl::CreateShader(const ShaderCreateInfo& ShaderCI,
+                                         IShader**               ppShader,
+                                         IDataBlob**             ppCompilerOutput)
 {
     const ShaderD3D11Impl::CreateInfo D3D11ShaderCI{
         GetDeviceInfo(),
         GetAdapterInfo(),
-        GetD3D11Device()->GetFeatureLevel() //
+        GetD3D11Device()->GetFeatureLevel(),
+        ppCompilerOutput,
     };
     CreateShaderImpl(ppShader, ShaderCI, D3D11ShaderCI);
 }

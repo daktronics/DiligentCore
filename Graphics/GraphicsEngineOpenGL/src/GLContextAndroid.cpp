@@ -226,6 +226,10 @@ void GLContext::InitGLES()
     if (glGetError() != GL_NO_ERROR)
         LOG_ERROR_MESSAGE("Failed to enable SRGB framebuffers");
 
+    glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
+    if (glGetError() != GL_NO_ERROR)
+        LOG_ERROR_MESSAGE("Failed to enable primitive restart fixed index");
+
     gles_initialized_ = true;
 }
 
@@ -271,8 +275,8 @@ GLContext::GLContext(const EngineGLCreateInfo& InitAttribs,
     Init(NativeWindow);
 
     DevType          = RENDER_DEVICE_TYPE_GLES;
-    APIVersion.Major = static_cast<Uint8>(major_version_);
-    APIVersion.Minor = static_cast<Uint8>(minor_version_);
+    APIVersion.Major = static_cast<Uint32>(major_version_);
+    APIVersion.Minor = static_cast<Uint32>(minor_version_);
 }
 
 GLContext::~GLContext()

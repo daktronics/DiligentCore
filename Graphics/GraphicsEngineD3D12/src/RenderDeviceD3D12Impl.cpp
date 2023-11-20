@@ -1,5 +1,5 @@
 /*
- *  Copyright 2019-2022 Diligent Graphics LLC
+ *  Copyright 2019-2023 Diligent Graphics LLC
  *  Copyright 2015-2019 Egor Yusov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -160,7 +160,6 @@ RenderDeviceD3D12Impl::RenderDeviceD3D12Impl(IReferenceCounters*          pRefCo
         {RawMemAllocator, *this, EngineCI.GPUDescriptorHeapSize[0], EngineCI.GPUDescriptorHeapDynamicSize[0], D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE},
         {RawMemAllocator, *this, EngineCI.GPUDescriptorHeapSize[1], EngineCI.GPUDescriptorHeapDynamicSize[1], D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER,     D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE}
     },
-    m_ContextPool           (STD_ALLOCATOR_RAW_MEM(PooledCommandContext, GetRawAllocator(), "Allocator for vector<PooledCommandContext>")),
     m_DynamicMemoryManager  {GetRawAllocator(), *this, EngineCI.NumDynamicHeapPagesToReserve, EngineCI.DynamicHeapPageSize},
     m_MipsGenerator         {pd3d12Device},
     m_pDxCompiler           {CreateDXCompiler(DXCompilerTarget::Direct3D12, 0, EngineCI.pDxCompilerPath)},
@@ -196,6 +195,8 @@ RenderDeviceD3D12Impl::RenderDeviceD3D12Impl(IReferenceCounters*          pRefCo
             // Header may not have constants for D3D_SHADER_MODEL_6_1 and above.
             const D3D_SHADER_MODEL Models[] = //
                 {
+                    static_cast<D3D_SHADER_MODEL>(0x67),
+                    static_cast<D3D_SHADER_MODEL>(0x66),
                     static_cast<D3D_SHADER_MODEL>(0x65), // minimum required for mesh shader and DXR 1.1
                     static_cast<D3D_SHADER_MODEL>(0x64),
                     static_cast<D3D_SHADER_MODEL>(0x63), // minimum required for DXR 1.0
@@ -213,9 +214,12 @@ RenderDeviceD3D12Impl::RenderDeviceD3D12Impl(IReferenceCounters*          pRefCo
                     break;
                 }
             }
-            m_MaxShaderVersion = Version{(MaxShaderModel >> 4) & 0xFu, MaxShaderModel & 0xFu};
 
-            LOG_INFO_MESSAGE("Max device shader model: ", Uint32{m_MaxShaderVersion.Major}, '_', Uint32{m_MaxShaderVersion.Minor} & 0xF);
+            auto& MaxHLSLVersion = m_DeviceInfo.MaxShaderVersion.HLSL;
+            MaxHLSLVersion.Major = (MaxShaderModel >> 4) & 0xFu;
+            MaxHLSLVersion.Minor = MaxShaderModel & 0xFu;
+
+            LOG_INFO_MESSAGE("Max device shader model: ", Uint32{MaxHLSLVersion.Major}, '_', Uint32{MaxHLSLVersion.Minor} & 0xF);
         }
 
 #ifdef DILIGENT_DEVELOPMENT
@@ -311,8 +315,10 @@ void RenderDeviceD3D12Impl::DisposeCommandContext(PooledCommandContext&& Ctx)
 
 void RenderDeviceD3D12Impl::FreeCommandContext(PooledCommandContext&& Ctx)
 {
-    std::lock_guard<std::mutex> LockGuard(m_ContextPoolMutex);
-    m_ContextPool.emplace_back(std::move(Ctx));
+    const auto CmdListType = Ctx->GetCommandListType();
+
+    std::lock_guard<std::mutex> Guard{m_ContextPoolMutex};
+    m_ContextPool.emplace(CmdListType, std::move(Ctx));
 #ifdef DILIGENT_DEVELOPMENT
     m_AllocatedCtxCounter.fetch_add(-1);
 #endif
@@ -449,11 +455,13 @@ RenderDeviceD3D12Impl::PooledCommandContext RenderDeviceD3D12Impl::AllocateComma
 {
     auto& CmdListMngr = GetCmdListManager(CommandQueueId);
     {
-        std::lock_guard<std::mutex> LockGuard(m_ContextPoolMutex);
-        if (!m_ContextPool.empty())
+        std::lock_guard<std::mutex> Guard{m_ContextPoolMutex};
+
+        auto pool_it = m_ContextPool.find(CmdListMngr.GetCommandListType());
+        if (pool_it != m_ContextPool.end())
         {
-            PooledCommandContext Ctx = std::move(m_ContextPool.back());
-            m_ContextPool.pop_back();
+            PooledCommandContext Ctx = std::move(pool_it->second);
+            m_ContextPool.erase(pool_it);
             Ctx->Reset(CmdListMngr);
             Ctx->SetID(ID);
 #ifdef DILIGENT_DEVELOPMENT
@@ -548,13 +556,16 @@ void RenderDeviceD3D12Impl::CreateBuffer(const BufferDesc& BuffDesc, const Buffe
 }
 
 
-void RenderDeviceD3D12Impl::CreateShader(const ShaderCreateInfo& ShaderCI, IShader** ppShader)
+void RenderDeviceD3D12Impl::CreateShader(const ShaderCreateInfo& ShaderCI,
+                                         IShader**               ppShader,
+                                         IDataBlob**             ppCompilerOutput)
 {
     const ShaderD3D12Impl::CreateInfo D3D12ShaderCI{
         GetDxCompiler(),
         GetDeviceInfo(),
         GetAdapterInfo(),
-        GetMaxShaderVersion() //
+        m_DeviceInfo.MaxShaderVersion.HLSL,
+        ppCompilerOutput,
     };
     CreateShaderImpl(ppShader, ShaderCI, D3D12ShaderCI);
 }

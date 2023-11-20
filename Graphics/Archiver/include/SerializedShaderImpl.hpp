@@ -1,5 +1,5 @@
 /*
- *  Copyright 2019-2022 Diligent Graphics LLC
+ *  Copyright 2019-2023 Diligent Graphics LLC
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -51,7 +51,8 @@ public:
     SerializedShaderImpl(IReferenceCounters*      pRefCounters,
                          SerializationDeviceImpl* pDevice,
                          const ShaderCreateInfo&  ShaderCI,
-                         const ShaderArchiveInfo& ArchiveInfo);
+                         const ShaderArchiveInfo& ArchiveInfo,
+                         IDataBlob**              ppCompilerOutput);
     ~SerializedShaderImpl();
 
     virtual void DILIGENT_CALL_TYPE QueryInterface(const INTERFACE_ID& IID, IObject** ppInterface) override final;
@@ -60,6 +61,7 @@ public:
 
     UNSUPPORTED_CONST_METHOD(Uint32, GetResourceCount)
     UNSUPPORTED_CONST_METHOD(void, GetResourceDesc, Uint32 Index, ShaderResourceDesc& ResourceDesc)
+    UNSUPPORTED_CONST_METHOD(const ShaderCodeBufferDesc*, GetConstantBufferDesc, Uint32 Index)
     UNSUPPORTED_CONST_METHOD(Int32, GetUniqueID)
     UNSUPPORTED_METHOD(void, SetUserData, IObject* pUserData)
     UNSUPPORTED_CONST_METHOD(IObject*, GetUserData)
@@ -110,23 +112,35 @@ private:
                       const ArgTypes&... Args) noexcept(false);
 
 #if D3D11_SUPPORTED
-    void CreateShaderD3D11(IReferenceCounters* pRefCounters, const ShaderCreateInfo& ShaderCI) noexcept(false);
+    void CreateShaderD3D11(IReferenceCounters*     pRefCounters,
+                           const ShaderCreateInfo& ShaderCI,
+                           IDataBlob**             ppCompilerOutput) noexcept(false);
 #endif
 
 #if D3D12_SUPPORTED
-    void CreateShaderD3D12(IReferenceCounters* pRefCounters, const ShaderCreateInfo& ShaderCI) noexcept(false);
+    void CreateShaderD3D12(IReferenceCounters*     pRefCounters,
+                           const ShaderCreateInfo& ShaderCI,
+                           IDataBlob**             ppCompilerOutput) noexcept(false);
 #endif
 
 #if GL_SUPPORTED || GLES_SUPPORTED
-    void CreateShaderGL(IReferenceCounters* pRefCounters, const ShaderCreateInfo& ShaderCI, RENDER_DEVICE_TYPE DeviceType) noexcept(false);
+    void CreateShaderGL(IReferenceCounters*     pRefCounters,
+                        const ShaderCreateInfo& ShaderCI,
+                        RENDER_DEVICE_TYPE      DeviceType,
+                        IDataBlob**             ppCompilerOutput) noexcept(false);
 #endif
 
 #if VULKAN_SUPPORTED
-    void CreateShaderVk(IReferenceCounters* pRefCounters, const ShaderCreateInfo& ShaderCI) noexcept(false);
+    void CreateShaderVk(IReferenceCounters*     pRefCounters,
+                        const ShaderCreateInfo& ShaderCI,
+                        IDataBlob**             ppCompilerOutput) noexcept(false);
 #endif
 
 #if METAL_SUPPORTED
-    void CreateShaderMtl(IReferenceCounters* pRefCounters, const ShaderCreateInfo& ShaderCI, DeviceType Type) noexcept(false);
+    void CreateShaderMtl(IReferenceCounters*     pRefCounters,
+                         const ShaderCreateInfo& ShaderCI,
+                         DeviceType              Type,
+                         IDataBlob**             ppCompilerOutput) noexcept(false);
 #endif
 };
 

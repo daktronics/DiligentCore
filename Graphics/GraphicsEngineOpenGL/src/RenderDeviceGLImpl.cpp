@@ -1,5 +1,5 @@
 /*
- *  Copyright 2019-2022 Diligent Graphics LLC
+ *  Copyright 2019-2023 Diligent Graphics LLC
  *  Copyright 2015-2019 Egor Yusov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -224,6 +224,29 @@ RenderDeviceGLImpl::RenderDeviceGLImpl(IReferenceCounters*       pRefCounters,
     }
 #endif
 
+#if PLATFORM_WIN32 || PLATFORM_LINUX || PLATFORM_MACOS
+    if (m_DeviceInfo.APIVersion >= Version{4, 6} || CheckExtension("GL_ARB_ES3_compatibility"))
+    {
+        glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
+        if (glGetError() != GL_NO_ERROR)
+            LOG_ERROR_MESSAGE("Failed to enable primitive restart fixed index");
+    }
+    else
+    {
+        glEnable(GL_PRIMITIVE_RESTART);
+        if (glGetError() == GL_NO_ERROR)
+        {
+            glPrimitiveRestartIndex(0xFFFFFFFFu);
+            if (glGetError() != GL_NO_ERROR)
+                LOG_ERROR_MESSAGE("Failed to set the primitive restart index");
+        }
+        else
+        {
+            LOG_ERROR_MESSAGE("Failed to enable primitive restart");
+        }
+    }
+#endif
+
     InitAdapterInfo();
 
     // Enable requested device features
@@ -269,6 +292,15 @@ RenderDeviceGLImpl::RenderDeviceGLImpl(IReferenceCounters*       pRefCounters,
 #endif
         }
     }
+
+    if (m_DeviceInfo.Type == RENDER_DEVICE_TYPE_GL)
+        m_DeviceInfo.MaxShaderVersion.GLSL = m_DeviceInfo.APIVersion;
+    else
+        m_DeviceInfo.MaxShaderVersion.GLESSL = m_DeviceInfo.APIVersion;
+
+#if !DILIGENT_NO_HLSL
+    m_DeviceInfo.MaxShaderVersion.HLSL = {5, 0};
+#endif
 }
 
 RenderDeviceGLImpl::~RenderDeviceGLImpl()
@@ -303,18 +335,24 @@ void RenderDeviceGLImpl::CreateBufferFromGLHandle(Uint32 GLHandle, const BufferD
     CreateBufferImpl(ppBuffer, BuffDesc, std::ref(pDeviceContext->GetContextState()), GLHandle, /*bIsDeviceInternal =*/false);
 }
 
-void RenderDeviceGLImpl::CreateShader(const ShaderCreateInfo& ShaderCreateInfo, IShader** ppShader, bool bIsDeviceInternal)
+void RenderDeviceGLImpl::CreateShader(const ShaderCreateInfo& ShaderCreateInfo,
+                                      IShader**               ppShader,
+                                      IDataBlob**             ppCompilerOutput,
+                                      bool                    bIsDeviceInternal)
 {
     const ShaderGLImpl::CreateInfo GLShaderCI{
         GetDeviceInfo(),
-        GetAdapterInfo() //
+        GetAdapterInfo(),
+        ppCompilerOutput,
     };
     CreateShaderImpl(ppShader, ShaderCreateInfo, GLShaderCI, bIsDeviceInternal);
 }
 
-void RenderDeviceGLImpl::CreateShader(const ShaderCreateInfo& ShaderCreateInfo, IShader** ppShader)
+void RenderDeviceGLImpl::CreateShader(const ShaderCreateInfo& ShaderCreateInfo,
+                                      IShader**               ppShader,
+                                      IDataBlob**             ppCompilerOutput)
 {
-    CreateShader(ShaderCreateInfo, ppShader, false);
+    CreateShader(ShaderCreateInfo, ppShader, ppCompilerOutput, false);
 }
 
 void RenderDeviceGLImpl::CreateTexture(const TextureDesc& TexDesc, const TextureData* pData, ITexture** ppTexture, bool bIsDeviceInternal)
@@ -700,6 +738,7 @@ void RenderDeviceGLImpl::InitAdapterInfo()
         Features.NativeFence                = DEVICE_FEATURE_STATE_DISABLED;
         Features.TileShaders                = DEVICE_FEATURE_STATE_DISABLED;
         Features.SubpassFramebufferFetch    = DEVICE_FEATURE_STATE_DISABLED;
+        Features.TextureComponentSwizzle    = DEVICE_FEATURE_STATE_DISABLED;
 
         {
             bool WireframeFillSupported = (glPolygonMode != nullptr);
@@ -772,6 +811,7 @@ void RenderDeviceGLImpl::InitAdapterInfo()
             ENABLE_FEATURE(ShaderInt8,                    CheckExtension("GL_EXT_shader_explicit_arithmetic_types_int8"));
             ENABLE_FEATURE(ResourceBuffer8BitAccess,      CheckExtension("GL_EXT_shader_8bit_storage"));
             ENABLE_FEATURE(UniformBuffer8BitAccess,       CheckExtension("GL_EXT_shader_8bit_storage"));
+            ENABLE_FEATURE(TextureComponentSwizzle,       IsGL46OrAbove || CheckExtension("GL_ARB_texture_swizzle"));
             // clang-format on
 
             TexProps.MaxTexture1DDimension      = MaxTextureSize;
@@ -838,6 +878,7 @@ void RenderDeviceGLImpl::InitAdapterInfo()
             ENABLE_FEATURE(ShaderInt8,                strstr(Extensions, "shader_explicit_arithmetic_types_int8"));
             ENABLE_FEATURE(ResourceBuffer8BitAccess,  strstr(Extensions, "shader_8bit_storage"));
             ENABLE_FEATURE(UniformBuffer8BitAccess,   strstr(Extensions, "shader_8bit_storage"));
+            ENABLE_FEATURE(TextureComponentSwizzle,   true);
             // clang-format on
 
             TexProps.MaxTexture1DDimension      = 0; // Not supported in GLES 3.2
@@ -997,7 +1038,7 @@ void RenderDeviceGLImpl::InitAdapterInfo()
         m_AdapterInfo.Queues[0].TextureCopyGranularity[2] = 1;
     }
 
-    ASSERT_SIZEOF(DeviceFeatures, 40, "Did you add a new feature to DeviceFeatures? Please handle its status here.");
+    ASSERT_SIZEOF(DeviceFeatures, 41, "Did you add a new feature to DeviceFeatures? Please handle its status here.");
 }
 
 void RenderDeviceGLImpl::FlagSupportedTexFormats()

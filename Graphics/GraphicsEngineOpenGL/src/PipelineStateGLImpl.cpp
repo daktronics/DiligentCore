@@ -1,5 +1,5 @@
 /*
- *  Copyright 2019-2022 Diligent Graphics LLC
+ *  Copyright 2019-2023 Diligent Graphics LLC
  *  Copyright 2015-2019 Egor Yusov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,6 +37,7 @@
 #include "GLTypeConversions.hpp"
 
 #include "EngineMemory.h"
+#include "Align.hpp"
 
 namespace Diligent
 {
@@ -144,7 +145,7 @@ PipelineResourceSignatureDescWrapper PipelineStateGLImpl::GetDefaultSignatureDes
         VERIFY_EXPR(m_GLPrograms[0] != 0);
 
         const auto SamplerResFlag = GetSamplerResourceFlag(ShaderStages, true /*SilenceWarning*/);
-        ProgramResources.LoadUniforms(ActiveStages, SamplerResFlag, m_GLPrograms[0], pImmediateCtx->GetContextState());
+        ProgramResources.LoadUniforms({ActiveStages, SamplerResFlag, m_GLPrograms[0], pImmediateCtx->GetContextState()});
         ProgramResources.ProcessConstResources(HandleResource, HandleResource, HandleResource, HandleResource);
 
         if (ResourceLayout.NumImmutableSamplers > 0)
@@ -202,7 +203,7 @@ void PipelineStateGLImpl::InitResourceLayout(PSO_CREATE_INTERNAL_FLAGS InternalF
         const auto SamplerResFlag = GetSamplerResourceFlag(ShaderStages, false /*SilenceWarning*/);
 
         auto pResources = std::make_shared<ShaderResourcesGL>();
-        pResources->LoadUniforms(ActiveStages, GetSamplerResourceFlag(ShaderStages, SamplerResFlag), m_GLPrograms[0], pImmediateCtx->GetContextState());
+        pResources->LoadUniforms({ActiveStages, GetSamplerResourceFlag(ShaderStages, SamplerResFlag), m_GLPrograms[0], pImmediateCtx->GetContextState()});
         ProgResources[0] = pResources;
         ValidateShaderResources(std::move(pResources), m_Desc.Name, ActiveStages);
     }
@@ -319,7 +320,7 @@ PipelineStateGLImpl::PipelineStateGLImpl(IReferenceCounters*                    
             ShaderCI.Source          = "void main(){}";
             ShaderCI.Desc.ShaderType = SHADER_TYPE_PIXEL;
             ShaderCI.Desc.Name       = "Dummy fragment shader";
-            pDeviceGL->CreateShader(ShaderCI, pTempPS.DblPtr<IShader>());
+            pDeviceGL->CreateShader(ShaderCI, pTempPS.DblPtr<IShader>(), nullptr);
 
             Shaders.emplace_back(pTempPS);
         }
@@ -441,6 +442,19 @@ GLObjectWrappers::GLPipelineObj& PipelineStateGLImpl::GetGLProgramPipeline(GLCon
     return ctx_pipeline.second;
 }
 
+GLuint PipelineStateGLImpl::GetGLProgramHandle(SHADER_TYPE Stage) const
+{
+    DEV_CHECK_ERR(IsPowerOfTwo(Stage), "Exactly one shader stage must be specified");
+
+    for (size_t i = 0; i < m_NumPrograms; ++i)
+    {
+        // Note: in case of non-separable programs, m_ShaderTypes[0] contains
+        //       all shader stages in the pipeline.
+        if ((m_ShaderTypes[i] & Stage) != 0)
+            return m_GLPrograms[i];
+    }
+    return 0;
+}
 
 void PipelineStateGLImpl::ValidateShaderResources(std::shared_ptr<const ShaderResourcesGL> pShaderResources, const char* ShaderName, SHADER_TYPE ShaderStages)
 {

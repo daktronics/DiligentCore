@@ -1,5 +1,5 @@
 /*
- *  Copyright 2019-2022 Diligent Graphics LLC
+ *  Copyright 2019-2023 Diligent Graphics LLC
  *  Copyright 2015-2019 Egor Yusov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -737,6 +737,7 @@ GraphicsAdapterInfo EngineFactoryD3D12Impl::GetGraphicsAdapterInfo(void*        
 
         Features.VertexPipelineUAVWritesAndAtomics = DEVICE_FEATURE_STATE_ENABLED;
         Features.NativeFence                       = DEVICE_FEATURE_STATE_OPTIONAL; // can be disabled
+        Features.TextureComponentSwizzle           = DEVICE_FEATURE_STATE_ENABLED;
 
         // Check if mesh shader is supported.
         bool MeshShadersSupported = false;
@@ -759,8 +760,11 @@ GraphicsAdapterInfo EngineFactoryD3D12Impl::GetGraphicsAdapterInfo(void*        
             Features.MeshShaders = DEVICE_FEATURE_STATE_ENABLED;
 
             auto& MeshProps{AdapterInfo.MeshShader};
-            MeshProps.MaxTaskCount = 64000; // from specs: https://microsoft.github.io/DirectX-Specs/d3d/MeshShader.html#dispatchmesh-api
-            ASSERT_SIZEOF(MeshProps, 4, "Did you add a new member to MeshShaderProperties? Please initialize it here.");
+            MeshProps.MaxThreadGroupCountX     = 65536; // from specs: https://microsoft.github.io/DirectX-Specs/d3d/MeshShader.html#dispatchmesh-api
+            MeshProps.MaxThreadGroupCountY     = 65536;
+            MeshProps.MaxThreadGroupCountZ     = 65536;
+            MeshProps.MaxThreadGroupTotalCount = 1u << 22u;
+            ASSERT_SIZEOF(MeshProps, 16, "Did you add a new member to MeshShaderProperties? Please initialize it here.");
         }
 
         Features.ShaderResourceRuntimeArray = DEVICE_FEATURE_STATE_ENABLED;
@@ -1056,7 +1060,7 @@ GraphicsAdapterInfo EngineFactoryD3D12Impl::GetGraphicsAdapterInfo(void*        
         ASSERT_SIZEOF(DrawCommandProps, 12, "Did you add a new member to DrawCommandProperties? Please initialize it here.");
     }
 
-    ASSERT_SIZEOF(DeviceFeatures, 40, "Did you add a new feature to DeviceFeatures? Please handle its status here.");
+    ASSERT_SIZEOF(DeviceFeatures, 41, "Did you add a new feature to DeviceFeatures? Please handle its status here.");
 
     return AdapterInfo;
 }
