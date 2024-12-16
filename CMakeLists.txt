@@ -336,10 +336,10 @@ if(MSVC)
 
     set(DILIGENT_MSVC_DEBUG_COMPILE_OPTIONS "" CACHE STRING "Additional MSVC compile options for debug configuration")
 
-    if("${TARGET_CPU}" STREQUAL "x86_64")
-        # Enable AVX2
-        set(DILIGENT_MSVC_RELEASE_COMPILE_OPTIONS "/arch:AVX2")
-    endif()
+#    if("${TARGET_CPU}" STREQUAL "x86_64")
+#        # Enable AVX2
+#        set(DILIGENT_MSVC_RELEASE_COMPILE_OPTIONS "/arch:AVX2")
+#    endif()
     set(DILIGENT_MSVC_RELEASE_COMPILE_OPTIONS ${DILIGENT_MSVC_RELEASE_COMPILE_OPTIONS} CACHE STRING "Additional MSVC compile options for release configurations")
 
     # Enable level 4 warnings, but disable
