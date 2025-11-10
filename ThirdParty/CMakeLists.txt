@@ -209,7 +209,7 @@ if (NOT TARGET xxHash::xxhash)
     set(XXHASH_BUNDLED_MODE OFF)
     add_subdirectory(xxHash/build/cmake)
     set_directory_root_folder("xxHash/build/cmake" "DiligentCore/ThirdParty/xxHash")
-    install(FILES "${xxHash_SOURCE_DIR}/../../LICENSE" DESTINATION "Licenses/ThirdParty/${DILIGENT_CORE_DIR}" RENAME xxHash-License.txt)
+    install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/xxHash/LICENSE" DESTINATION "Licenses/ThirdParty/${DILIGENT_CORE_DIR}" RENAME xxHash-License.txt)
     list(APPEND THIRD_PARTY_LIBS xxhash)
 endif()
 

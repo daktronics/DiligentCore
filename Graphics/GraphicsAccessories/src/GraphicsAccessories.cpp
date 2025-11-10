@@ -431,7 +431,7 @@ const TextureFormatAttribs& GetTextureFormatAttribs(TEXTURE_FORMAT Format)
 
 #undef  INIT_TEX_FORMAT_INFO
             // clang-format on
-            static_assert(TEX_FORMAT_NUM_FORMATS == 106, "Not all texture formats initialized.");
+            static_assert(TEX_FORMAT_NUM_FORMATS == 111, "Not all texture formats initialized.");
 
 #ifdef DILIGENT_DEBUG
             for (Uint32 Fmt = TEX_FORMAT_UNKNOWN; Fmt < TEX_FORMAT_NUM_FORMATS; ++Fmt)
@@ -2575,7 +2575,7 @@ const Char* GetPipelineStateStatusString(PIPELINE_STATE_STATUS PipelineStatus, b
 
 TEXTURE_FORMAT UnormFormatToSRGB(TEXTURE_FORMAT Fmt)
 {
-    static_assert(TEX_FORMAT_NUM_FORMATS == 106, "Please update the switch below to handle the new texture format, if needed");
+    static_assert(TEX_FORMAT_NUM_FORMATS == 111, "Please update the switch below to handle the new texture format, if needed");
     switch (Fmt)
     {
         case TEX_FORMAT_RGBA8_UNORM:
@@ -2615,7 +2615,7 @@ TEXTURE_FORMAT UnormFormatToSRGB(TEXTURE_FORMAT Fmt)
 
 TEXTURE_FORMAT SRGBFormatToUnorm(TEXTURE_FORMAT Fmt)
 {
-    static_assert(TEX_FORMAT_NUM_FORMATS == 106, "Please update the switch below to handle the new texture format, if needed");
+    static_assert(TEX_FORMAT_NUM_FORMATS == 111, "Please update the switch below to handle the new texture format, if needed");
     switch (Fmt)
     {
         case TEX_FORMAT_RGBA8_UNORM_SRGB:
@@ -2704,7 +2704,7 @@ TEXTURE_FORMAT BCFormatToUncompressed(TEXTURE_FORMAT Fmt)
 
 TEXTURE_FORMAT TypelessFormatToUnorm(TEXTURE_FORMAT Fmt)
 {
-    static_assert(TEX_FORMAT_NUM_FORMATS == 106, "Please update the switch below to handle the new texture format, if needed");
+    static_assert(TEX_FORMAT_NUM_FORMATS == 111, "Please update the switch below to handle the new texture format, if needed");
     switch (Fmt)
     {
         case TEX_FORMAT_R8_TYPELESS:
@@ -2753,7 +2753,7 @@ TEXTURE_FORMAT TypelessFormatToUnorm(TEXTURE_FORMAT Fmt)
 
 TEXTURE_FORMAT TypelessFormatToSRGB(TEXTURE_FORMAT Fmt)
 {
-    static_assert(TEX_FORMAT_NUM_FORMATS == 106, "Please update the switch below to handle the new texture format, if needed");
+    static_assert(TEX_FORMAT_NUM_FORMATS == 111, "Please update the switch below to handle the new texture format, if needed");
     switch (Fmt)
     {
         case TEX_FORMAT_RGBA8_TYPELESS:

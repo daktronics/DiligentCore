@@ -423,7 +423,7 @@ DXGI_FORMAT TexFormatToDXGI_Format(TEXTURE_FORMAT TexFormat, Uint32 BindFlags)
         FmtToDXGIFmtMap[TEX_FORMAT_P010]                   = DXGI_FORMAT_P010;
        // clang-format on
 
-        static_assert(TEX_FORMAT_NUM_FORMATS == 106, "Please enter the new format information above");
+        static_assert(TEX_FORMAT_NUM_FORMATS == 111, "Please enter the new format information above");
         bFormatMapInitialized = true;
     }
 
