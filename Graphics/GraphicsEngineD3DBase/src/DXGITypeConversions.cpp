@@ -421,7 +421,7 @@ DXGI_FORMAT TexFormatToDXGI_Format(TEXTURE_FORMAT TexFormat, Uint32 BindFlags)
         FmtToDXGIFmtMap[TEX_FORMAT_Y416]                   = DXGI_FORMAT_Y416;
         FmtToDXGIFmtMap[TEX_FORMAT_NV12]                   = DXGI_FORMAT_NV12;
         FmtToDXGIFmtMap[TEX_FORMAT_P010]                   = DXGI_FORMAT_P010;
-       // clang-format on
+        // clang-format on
 
         static_assert(TEX_FORMAT_NUM_FORMATS == 111, "Please enter the new format information above");
         bFormatMapInitialized = true;
