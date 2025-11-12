@@ -8,7 +8,7 @@ INTERFACE
 )
 
 if(DILIGENT_INSTALL_CORE)
-    install_core_lib(Diligent-PlatformInterface)
+    install_core_lib_and_export(Diligent-PlatformInterface)
 endif()
 
 set(PLATFORM_INTERFACE_HEADERS
