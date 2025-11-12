@@ -336,8 +336,8 @@ set_source_files_properties(
 )
 
 if(DILIGENT_INSTALL_CORE)
-    install_core_lib(Diligent-GraphicsEngineOpenGLInterface)
-    install_core_lib(Diligent-GraphicsEngineOpenGL-shared)
-    install_core_lib(Diligent-GraphicsEngineOpenGL-static)
+    install_core_lib_and_export(Diligent-GraphicsEngineOpenGLInterface)
+    install_core_lib_and_export(Diligent-GraphicsEngineOpenGL-shared)
+    install_core_lib_and_export(Diligent-GraphicsEngineOpenGL-static)
     install_core_lib(Diligent-GLAdapterSelector)
 endif()

@@ -16,7 +16,7 @@ INTERFACE
 )
 
 if(DILIGENT_INSTALL_CORE)
-    install_core_lib(Diligent-GraphicsEngineInterface)
+    install_core_lib_and_export(Diligent-GraphicsEngineInterface)
 endif()
 
 add_subdirectory(GraphicsAccessories)

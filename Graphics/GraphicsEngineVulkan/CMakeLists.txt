@@ -382,7 +382,7 @@ set_source_files_properties(
 )
 
 if(DILIGENT_INSTALL_CORE)
-    install_core_lib(Diligent-GraphicsEngineVkInterface)
-    install_core_lib(Diligent-GraphicsEngineVk-shared)
-    install_core_lib(Diligent-GraphicsEngineVk-static)
+    install_core_lib_and_export(Diligent-GraphicsEngineVkInterface)
+    install_core_lib_and_export(Diligent-GraphicsEngineVk-shared)
+    install_core_lib_and_export(Diligent-GraphicsEngineVk-static)
 endif()
