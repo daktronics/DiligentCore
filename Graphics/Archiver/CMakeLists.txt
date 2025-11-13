@@ -230,6 +230,6 @@ set_common_target_properties(Diligent-Archiver-shared)
 
 if(DILIGENT_INSTALL_CORE)
     install_core_lib_and_export(Diligent-ArchiverInterface)
-    install_core_lib(Diligent-Archiver-shared)
+    install_core_lib_and_export(Diligent-Archiver-shared)
     install_core_lib(Diligent-Archiver-static)
 endif()
