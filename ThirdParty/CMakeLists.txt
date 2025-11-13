@@ -234,6 +234,7 @@ if (DILIGENT_INSTALL_CORE)
                 FILE DiligentThirdPartyTargets.cmake
                 NAMESPACE Diligent::
                 DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
+    )
 endif()
 
 install(FILES stb/stb_image_write_license.txt DESTINATION "Licenses/ThirdParty/${DILIGENT_CORE_DIR}")
