@@ -35,6 +35,11 @@ if (VULKAN_SUPPORTED)
         )
         install(FILES "${Vulkan-Headers_SOURCE_DIR}/LICENSE.txt" DESTINATION "Licenses/ThirdParty/${DILIGENT_CORE_DIR}" RENAME Vulkan-Headers-License.txt)
         install_core_lib(Vulkan-Headers)
+        if (DILIGENT_INSTALL_CORE)
+            install(TARGETS Vulkan-Headers
+                EXPORT DiligentThirdPartyTargets
+            )
+         endif()
     endif()
 endif()
 
