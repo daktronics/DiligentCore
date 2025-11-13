@@ -17,7 +17,8 @@ set_common_target_properties(Diligent-GraphicsEngineNextGenBase)
 
 target_include_directories(Diligent-GraphicsEngineNextGenBase
 PUBLIC
-    include
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include/DiligentCore/Graphics/GraphicsEngineNextGenBase>
 )
 
 target_link_libraries(Diligent-GraphicsEngineNextGenBase
