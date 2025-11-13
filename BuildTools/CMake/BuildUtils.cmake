@@ -336,16 +336,19 @@ function(install_core_lib _TARGET)
         list(APPEND DILIGENT_CORE_INSTALL_LIBS_LIST ${_TARGET})
         set(DILIGENT_CORE_INSTALL_LIBS_LIST ${DILIGENT_CORE_INSTALL_LIBS_LIST} CACHE INTERNAL "Core libraries installation list")
     elseif(TARGET_TYPE STREQUAL SHARED_LIBRARY)
-        install(TARGETS                 ${_TARGET}
-                ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}/${DILIGENT_CORE_DIR}/$<CONFIG>"
-                LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}/${DILIGENT_CORE_DIR}/$<CONFIG>"
-                RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+        install(TARGETS     ${_TARGET}
+            ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}/${DILIGENT_CORE_DIR}/$<CONFIG>"
+            LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}/${DILIGENT_CORE_DIR}/$<CONFIG>"
+            RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
         )
-        install(EXPORT ${_TARGET}Target
+        # Only install export if target will actually be installed
+        if(TARGET ${_TARGET})
+            install(EXPORT ${_TARGET}Target
                 FILE ${_TARGET}-target.cmake
                 NAMESPACE Diligent::
                 DESTINATION lib/cmake/diligent
-        )
+            )
+        endif()
         if (DILIGENT_INSTALL_PDB)
             install(FILES $<TARGET_PDB_FILE:${_TARGET}> DESTINATION "${CMAKE_INSTALL_BINDIR}" OPTIONAL)
         endif()
