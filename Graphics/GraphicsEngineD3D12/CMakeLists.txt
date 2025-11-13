@@ -309,6 +309,6 @@ set_source_files_properties(
 
 if(DILIGENT_INSTALL_CORE)
     install_core_lib_and_export(Diligent-GraphicsEngineD3D12Interface)
-    install_core_lib_and_export(Diligent-GraphicsEngineD3D12-shared)
+    install_core_lib(Diligent-GraphicsEngineD3D12-shared)
     install_core_lib(Diligent-GraphicsEngineD3D12-static)
 endif()
