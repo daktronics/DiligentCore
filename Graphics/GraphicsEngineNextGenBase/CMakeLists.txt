@@ -38,5 +38,5 @@ set_target_properties(Diligent-GraphicsEngineNextGenBase PROPERTIES
 )
 
 if(DILIGENT_INSTALL_CORE)
-    install_core_lib(Diligent-GraphicsEngineNextGenBase)
+    install_core_lib_and_export(Diligent-GraphicsEngineNextGenBase)
 endif()
