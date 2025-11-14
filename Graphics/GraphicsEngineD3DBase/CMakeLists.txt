@@ -72,7 +72,8 @@ set_target_properties(Diligent-GraphicsEngineD3DBase PROPERTIES
 
 if(DILIGENT_INSTALL_CORE)
     install_core_lib_and_export(Diligent-GraphicsEngineD3DBaseInterface)
-    install_core_lib_and_export(Diligent-GraphicsEngineD3DBase)
+    # Don't export - depends on Diligent-ShaderTools which isn't exported
+    #    install_core_lib_and_export(Diligent-GraphicsEngineD3DBase)
 endif()
 
 if(EXISTS "${DILIGENT_NVAPI_PATH}/nvapi.h")
