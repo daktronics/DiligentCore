@@ -10,7 +10,6 @@ if (GL_SUPPORTED AND (PLATFORM_WIN32 OR PLATFORM_LINUX OR PLATFORM_MACOS) AND (N
     add_subdirectory(glew)
     if (DILIGENT_INSTALL_CORE)
         install(TARGETS glew-static
-                EXPORT DiligentThirdPartyTargets
                 ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}/${DILIGENT_CORE_DIR}/$<CONFIG>"
                 LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}/${DILIGENT_CORE_DIR}/$<CONFIG>"
                 RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}/${DILIGENT_CORE_DIR}/$<CONFIG>"
@@ -37,7 +36,6 @@ if (VULKAN_SUPPORTED)
         install_core_lib(Vulkan-Headers)
         if (DILIGENT_INSTALL_CORE)
             install(TARGETS Vulkan-Headers
-                EXPORT DiligentThirdPartyTargets
             )
          endif()
     endif()
@@ -229,16 +227,9 @@ set_target_properties(${THIRD_PARTY_LIBS} PROPERTIES
 
 if (DILIGENT_INSTALL_CORE)
     install(TARGETS ${THIRD_PARTY_LIBS}
-            EXPORT DiligentThirdPartyTargets
             ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}/${DILIGENT_CORE_DIR}/$<CONFIG>"
             LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}/${DILIGENT_CORE_DIR}/$<CONFIG>"
             RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}/${DILIGENT_CORE_DIR}/$<CONFIG>"
-    )
-
-    install(EXPORT DiligentThirdPartyTargets
-                FILE DiligentThirdPartyTargets.cmake
-                NAMESPACE Diligent::
-                DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
     )
 endif()
 
