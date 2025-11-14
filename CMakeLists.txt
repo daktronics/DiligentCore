@@ -374,18 +374,6 @@ endif()
 
 target_link_libraries(Diligent-BuildSettings INTERFACE Diligent-PublicBuildSettings)
 
-# Export Diligent-BuildSettings for vcpkg installation
-if(DILIGENT_INSTALL_CORE)
-    install(TARGETS Diligent-BuildSettings
-            EXPORT Diligent-BuildSettingsTargets
-    )
-    install(EXPORT Diligent-BuildSettingsTargets
-            FILE DiligentCore-BuildSettingsTargets.cmake
-            NAMESPACE Diligent::
-            DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/DiligentCore"
-    )
-endif()
-
 foreach(DBG_CONFIG ${DEBUG_CONFIGURATIONS})
     target_compile_definitions(Diligent-BuildSettings INTERFACE "$<$<CONFIG:${DBG_CONFIG}>:_DEBUG;DEBUG>")
 endforeach()
