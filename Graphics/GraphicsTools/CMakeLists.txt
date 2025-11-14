@@ -192,5 +192,6 @@ set_target_properties(Diligent-GraphicsTools PROPERTIES
 
 if(DILIGENT_INSTALL_CORE)
     install_core_lib(Diligent-GraphicsTools)
-    install_core_lib_and_export(Diligent-GraphicsTools)
+  # Don't export GraphicsTools - has static backend dependencies (see CaminoNext docs/DILIGENT_CORE_PATCH.md)
+    #    install_core_lib_and_export(Diligent-GraphicsTools)
 endif()

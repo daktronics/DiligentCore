@@ -246,5 +246,6 @@ set_target_properties(Diligent-ShaderTools PROPERTIES
 
 if(DILIGENT_INSTALL_CORE)
     install_core_lib(Diligent-ShaderTools)
-    install_core_lib_and_export(Diligent-ShaderTools)
+    # Don't export ShaderTools - has implementation dependencies (see CaminoNext docs/DILIGENT_CORE_PATCH.md)
+    #    install_core_lib_and_export(Diligent-ShaderTools)
 endif()
