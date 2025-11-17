@@ -76,5 +76,5 @@ set_target_properties(Diligent-HLSL2GLSLConverterLib PROPERTIES
 if(DILIGENT_INSTALL_CORE)
     install_core_lib(Diligent-HLSL2GLSLConverterLib)
     # Don't export - depends on Diligent-ShaderTools which isn't exported
-    #    install_core_lib_and_export(Diligent-HLSL2GLSLConverterLib)
+        install_core_lib_and_export(Diligent-HLSL2GLSLConverterLib)
 endif()
