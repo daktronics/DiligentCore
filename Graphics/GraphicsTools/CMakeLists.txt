@@ -96,7 +96,7 @@ endif()
 
 if(VULKAN_SUPPORTED)
     list(APPEND SOURCE src/GraphicsUtilitiesVk.cpp)
-    list(APPEND DEPENDENCIES Diligent-GraphicsEngineVkInterface)
+    list(APPEND DEPENDENCIES Diligent-GraphicsEngineVkInterface Vulkan::Headers)  # Add Vulkan::Headers back
     if(DILIGENT_USE_OPENXR)
         list(APPEND SOURCE src/OpenXRUtilitiesVk.cpp)
     endif()
