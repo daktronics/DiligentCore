@@ -600,7 +600,7 @@ add_subdirectory(Tests)
 
 # Installation instructions
 if(DILIGENT_INSTALL_CORE)
-    #install_core_lib(Diligent-PublicBuildSettings)
+    install_core_lib(Diligent-PublicBuildSettings)
     install_core_lib_and_export(Diligent-PublicBuildSettings)
     install_core_lib_and_export(Diligent-BuildSettings)
 
